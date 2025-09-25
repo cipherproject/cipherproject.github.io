@@ -191,7 +191,7 @@ if not acad_general.empty:
     x = [domain_to_i[d] + random.uniform(-0.18, 0.18) for d in acad_general['domain']]
     y = [time_to_i[t]   + random.uniform(-0.18, 0.18) for t in acad_general['time_point']]
     z = [spec_to_i[s]   + random.uniform(-0.18, 0.18) for s in acad_general['specialty']]
-    size = 6
+    size = 4
     cdata = [make_customdata(r) for _, r in acad_general.iterrows()]
 
     traces.append(go.Scatter3d(
