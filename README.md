@@ -11,7 +11,7 @@ The full models with advanced functionality (filters, maps, NLP search) is avail
 
 ## Quick Start
 
-You don't need to install anything - just open the site above.
+No need to install anything - just open the demo site above.
 
 Alternatively, if you want to run the demo locally:
 
