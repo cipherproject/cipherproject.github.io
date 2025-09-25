@@ -384,8 +384,7 @@ HTML_PAGE = f"""<!doctype html>
       </p>
       <p class="text-sm mb-4">
         The demo model provides an approach for <b>minimising clinical surprise</b> during
-        hospital cyberattacks, by predicting dangerous patient safety events that may occur as the cyberattack evolves. 
-        Users can focus on specific <b>technical domains</b> (e.g. safety incidents related to loss of the laboratory systems) or <b>specific clinical areas</b> (e.g. harms likely to occur on paediatrics wards).
+        hospital cyberattacks, by predicting domains</b> (e.g. safety incidents related to loss of the laboratory systems) or <b>specific clinical areas</b> (e.g. harms likely to occur on paediatrics wards).
         The full models on the <a href="https://www.thecipherplatform.com">project website</a> can also be manipulated to plot the 'Clinical Impact' scores on the Y axis,
         thus providing time-series predictions of potential clinical harm over time (from 24 hours to Day 28).
         By showcasing these diverse events, assigning clinical impact scores and identifying
