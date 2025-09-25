@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# demoplot.py — Generates the CIPHER Cube landing page (
 
 import os, random, html
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
+import numpy as np
 
 # Configuration and setup
 CSV_PATH    = "data/v1_cipherdata_latest.csv"   # Latest version of Cipher Data - update as each row checked
@@ -368,14 +368,21 @@ HTML_PAGE = f"""<!doctype html>
       <h1 class="title" style="margin:10px 0 6px;">The CIPHER Cube Models</h1>
       <p class="text-sm mb-4">
         <b>CIPHER</b> was built to predict <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse.
-        The CIPHER models on this page draw from the datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of the <i>"Hospital Attacks"</i> database (from academic literature)
-        and the <i>"Patient Harms"</i> database drawn from social media. The models below display these patient safety incidents, as they emerge over time
+        The CIPHER models on this page draw from the datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of the <b><i>"Hospital Attacks"</i><b> database (drawn from academic literature)
+        and the <b><i>"Patient Harms"</i></b> database (drawn from social media posts). From these two data sources we created the full <CIPHER dataset>, available in the data folder,
+        which provides over 300 patient-level harms reported to have occured following a healthcare cyberattack.
+        The CIPHER model below displays these patient safety incidents, as they emerge over time
         from the onset of the cyberattack, across the different clinical specialties and affected technical domanis.
       </p>
       <p class="text-sm mb-4">
-        The interactive "Hospital at Ransom" cube below is a template model developed for a hypothetical hospital context and published open-source alongside our databases.
-        For these models to be effective for local hospital context, users will need to update the "At Risk Patient Groups" and "Impact Scores" for their local
-        patient population and disease burden. The demo cube below illustrates how these models can then be used to <b>minimise clinical surprise</b> during
+        The models are displayed as an <b>interactive "Hospital at Ransom" cube</b> below, which is a demo model developed for a hypothetical hospital context.
+        For these models to be effective for local hospital context, users would need to update the underlying data for the likely clinical impact in their hospitals. 
+        For instance, we have assigned 'Clinical Impact' scores to each patient safety incident, based on the likely effect in our hypothetical hospital (e.g. this hospital
+        has a heavy reliance on e-Prescribing in the ER, thus loss of digital drug release would have a high degree of impact. By downloading the underlying datasets
+        and updating this to local hospital contexts, users can utilise the database of cyberattack-induced patient safety incidents and tailor the model to their circumstances.
+      </p>
+      <p class="text-sm mb-4">
+        The demo model can illustrate how to <b>minimise clinical surprise</b> during
         hospital cyberattacks, by anticipating dangerous patient safety events that may occur. By showcasing these diverse events, assigning clinical impact scores and identifying
         the at-risk patient groups and necessary medical interventions, these models can be used to enhance Cyberattack incident response processes to protect patient care. All of these incidents are plotted on the 3D plot below, which structures these
         incidents by time (from the first hour of the attack to one month later), and technological dependency (the compromised domain responsible for the harm). The result
