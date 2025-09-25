@@ -33,7 +33,8 @@ Alternatively, if you want to run the demo locally:
 <b>data/v1_cipher_data.csv</b> is the version 1 release of the CIPHER dataset, which contains the combined academic and online data collected as part of our research project investigating patient-level harms from healthcare cyberattacks. Full details of the methodology for obtaining the dataset are provided in the associated published academic papers.
 
 ## Authors
-Dr Isabel Straw - Project Lead
+Dr Isabel Straw
+
 Developed as part of the HR3P Programme at UC San Diego
 
 ## License
