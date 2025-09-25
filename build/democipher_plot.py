@@ -367,26 +367,34 @@ HTML_PAGE = f"""<!doctype html>
       <span class="badge-lite">CIPHER Platform</span>
       <h1 class="title" style="margin:10px 0 6px;">The CIPHER Cube Models</h1>
       <p class="text-sm mb-4">
-        <b>CIPHER</b> was built to predict <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse.
-        The CIPHER models on this page draw from the datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of the <b><i>"Hospital Attacks"</i></b> database (drawn from academic literature)
-        and the <b><i>"Patient Harms"</i></b> database (drawn from social media posts). From these two data sources we created the full <CIPHER dataset>, available in the data folder,
-        which provides over 300 patient-level harms reported to have occured following a healthcare cyberattack.
-        The CIPHER model below displays these patient safety incidents, as they emerge over time
-        from the onset of the cyberattack, across the different clinical specialties and affected technical domanis.
+        <b>CIPHER</b> was built to model <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse during IT downtime at healthcare organisations.
+        To do this, our research collected examples of patient harms occurding during healthcare cyberattacks from diverse data sources, to form one combined
+        <b>'CIPHER database' </b>.
+        The CIPHER models on this page draw from our two key datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of <b><i>(1) The "Hospital Attacks"</i></b> database (a systematic review of
+        global papers reporting healthcare cyberattacls), and <b><i>(2) The "Patient Harms"</i></b> database (extracted through data mining social media posts). 
+        From these two sources we created the full <CIPHER dataset>, available in the data folder in the GitHub Repo,
+        which provides over <b>300 patient-level harms</b> reported to have occured following a healthcare cyberattack.
+        The <b>CIPHER model</b> below displays these patient safety incidents, as they emerge over time,
+        from the initial onset of the cyberattack to one month later, occuring across the different clinical specialties and affected technical domains.
       </p>
       <p class="text-sm mb-4">
-        The models are displayed as an <b>interactive "Hospital at Ransom" cube</b> below, which is a demo model developed for a hypothetical hospital context.
+        The models are displayed as an <b>interactive "Hospital at Ransom" cube</b>, which is a demo model developed for a hypothetical hospital context.
         For these models to be effective for local hospital context, users would need to update the underlying data for the likely clinical impact in their hospitals. 
         For instance, we have assigned 'Clinical Impact' scores to each patient safety incident, based on the likely effect in our hypothetical hospital (e.g. this hospital
-        has a heavy reliance on e-Prescribing in the ER, thus loss of digital drug release would have a high degree of impact. By downloading the underlying datasets
-        and updating this to local hospital contexts, users can utilise the database of cyberattack-induced patient safety incidents and tailor the model to their circumstances.
+        has a heavy reliance on e-Prescribing in the ER, thus loss of digital drug release would have a high degree of impact). By downloading the underlying datasets
+        and contextualising impact for local circumstances, users can utilise the database of cyberattack-induced patient safety incidents and tailor the model to their environment.
       </p>
       <p class="text-sm mb-4">
         The demo model can illustrate how to <b>minimise clinical surprise</b> during
-        hospital cyberattacks, by anticipating dangerous patient safety events that may occur. By showcasing these diverse events, assigning clinical impact scores and identifying
+        hospital cyberattacks, by anticipating dangerous patient safety events that may occur as the cyberattack evolves. 
+        Users can focus on specific technical domains (e.g. safety incidents related to loss of the laboratory systems) or specific clinical areas (e.g. harms likely to occur on paediatrics wards).
+        By showcasing these diverse events, assigning clinical impact scores and identifying
         the at-risk patient groups and necessary medical interventions, these models can be used to enhance Cyberattack incident response processes to protect patient care. All of these incidents are plotted on the 3D plot below, which structures these
         incidents by time (from the first hour of the attack to one month later), and technological dependency (the compromised domain responsible for the harm). The result
         is an interactive 3D plot visualising patient safety incidents emerging over time during the cyberattack, which can be customised to a local hospitals context and their specific technical dependencies.
+      </p>
+      <p class="text-sm mb-4">
+        <b>Click on each data point for an <u>information pane</u> regarding the safety incident, and links to underlying source material</b> 
       </p>
     </header>
 
