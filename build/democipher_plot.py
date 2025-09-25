@@ -368,7 +368,7 @@ HTML_PAGE = f"""<!doctype html>
       <h1 class="title" style="margin:10px 0 6px;">The CIPHER Cube Models</h1>
       <p class="text-sm mb-4">
         <b>CIPHER</b> was built to predict <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse.
-        The CIPHER models on this page draw from the datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of the <b><i>"Hospital Attacks"</i><b> database (drawn from academic literature)
+        The CIPHER models on this page draw from the datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of the <b><i>"Hospital Attacks"</i></b> database (drawn from academic literature)
         and the <b><i>"Patient Harms"</i></b> database (drawn from social media posts). From these two data sources we created the full <CIPHER dataset>, available in the data folder,
         which provides over 300 patient-level harms reported to have occured following a healthcare cyberattack.
         The CIPHER model below displays these patient safety incidents, as they emerge over time
