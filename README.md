@@ -18,7 +18,7 @@ No need to install anything - just open the demo site above.
 Alternatively, if you want to run the demo locally:
 
 ''' bash
-1. git clone https://github.com/thecipherplatform/thecipherplatform.github.io
+1. git clone https://github.com/cipherproject/thecipherplatform.github.io
 2. cd thecipherplatform.github.io
 3. python -m http.server.8080
 4. open http://localhost.8080 in your browser
