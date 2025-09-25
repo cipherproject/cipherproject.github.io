@@ -14,7 +14,7 @@ OUTPUT_HTML = "index.html"                       # Main HTML file - GitHub Pages
 random.seed(42)
 
 # Formatting
-# Time normalisation & display mapping
+## Time normalisation & display mapping
 
 TIME_ORDER = [
     "Time 0", "Hour Zero", "First Hour", "First Day", "First Week", "Week 2", "First Month", "Unknown"
@@ -55,8 +55,7 @@ def split_specialties(s): # Column in csv has multiple specialities for some poi
 def safe_str(x): 
     return "" if pd.isna(x) else str(x)
 
-# Load data
-
+# Load data (latest version of csv)
 if not os.path.exists(CSV_PATH):
     raise FileNotFoundError(f"CSV not found at {CSV_PATH}")
 
@@ -74,6 +73,7 @@ rename_map = {
     'Technical Domain':'domain',
     'Clinical Impact Score': 'impact'
 }
+
 df = df_raw.rename(columns=rename_map)
 
 # Preppin fields for model
@@ -81,7 +81,7 @@ df['time_point'] = df['time_point'].apply(norm_time_point)
 df.loc[df['time_point'] == "", 'time_point'] = "Unknown"
 df['domain'] = df['domain'].fillna("Unknown").replace("", "Unknown")
 
-# Numeric impact for sizing 
+# Numeric impact for sizing (impact scores from csv)
 df['impact'] = pd.to_numeric(df['impact'], errors='coerce').fillna(5).clip(lower=1)
 
 # Expand multi-specialty rows into one row per specialty 
