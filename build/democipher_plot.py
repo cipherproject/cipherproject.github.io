@@ -679,32 +679,30 @@ HTML_PAGE = f"""<!doctype html>
     window.currentSourceIndex = 0;
     window.currentSources = [];
 
-    window.addEventListener('load', function () {
+    <script>
+    window.addEventListener('load', function () {{
       // re-use debounce defined above
       const plot = document.getElementById('cipher-cube');
       if (!plot) return;
 
-      // If the plot is not yet fully initialized, retry shortly
-      function bindWhenReady() {
-        // plotly adds internal properties once the graph is ready
-        if (!plot || !plot._fullLayout) {
+      function bindWhenReady() {{
+        if (!plot || !plot._fullLayout) {{
           setTimeout(bindWhenReady, 50);
           return;
-        }
+        }}
 
-        plot.on('plotly_hover', debounce(function () {
+        plot.on('plotly_hover', debounce(function () {{
           document.body.style.cursor = 'pointer';
-        }, 30));
+        }}, 30));
 
-        plot.on('plotly_unhover', debounce(function () {
+        plot.on('plotly_unhover', debounce(function () {{
           document.body.style.cursor = 'default';
-        }, 50));
+        }}, 50));
 
-        plot.on('plotly_click', debounce(function (data) {
-          if (data.points && data.points[0]) {
-            var pointData = data.points[0].customdata || {};
+        plot.on('plotly_click', debounce(function (data) {{
+          if (data.points && data.points[0]) {{
+            var pointData = data.points[0].customdata || {{}};
 
-            // Reset multi-source state
             window.currentSourceIndex = 0;
             window.currentSources = [];
 
@@ -714,33 +712,33 @@ HTML_PAGE = f"""<!doctype html>
             document.getElementById('infoPanelTitle').textContent = shortTitle || 'Incident';
 
             const modalContent = document.getElementById('infoPanelContent');
-            if (modalContent) {
-              if (isMultiSource && window.multiSourceInfo[shortTitle]) {
+            if (modalContent) {{
+              if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
                 modalContent.classList.add('modal-border-multi');
-              } else {
+              }} else {{
                 modalContent.classList.remove('modal-border-multi');
-              }
-            }
+              }}
+            }}
 
-            if (isMultiSource && window.multiSourceInfo[shortTitle]) {
+            if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
               window.currentSources = window.multiSourceInfo[shortTitle].sources || [];
               displayMultiSourcePanel(shortTitle, window.currentSourceIndex);
               const sourceNav = document.getElementById('sourceNavigation');
               if (sourceNav) sourceNav.style.display = 'flex';
-            } else {
+            }} else {{
               const sourceNav = document.getElementById('sourceNavigation');
               if (sourceNav) sourceNav.style.display = 'none';
               document.getElementById('infoPanelBody').innerHTML = createSingleSourceModalContent(pointData);
-            }
+            }}
 
             $('#infoPanel').modal('show');
-          }
-        }, 250));
-      }
+          }}
+        }}, 250));
+      }}
 
       bindWhenReady();
-    });
-
+    }});
+    </script>
 
     // Nav buttons
     const prevSourceBtn = document.getElementById('prevSource');
