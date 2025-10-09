@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 import numpy as np
+from datetime import datetime
+import json
 
 # Configuration and setup
 CSV_PATH    = "data/v1_cipherdata_latest.csv"   # Latest version of Cipher Data - update as each row checked
@@ -289,10 +291,192 @@ layout = go.Layout(
     )
 )
 
-fig = go.Figure(data=traces, layout=layout)
+# Build a div + client-side loader that fetches your CSV at runtime
+VERSION = datetime.utcnow().strftime("%Y%m%d%H%M%S")  # cache-buster so Pages/CDN serves fresh CSV
+CSV_URL = f"{CSV_PATH}?v={VERSION}"
+SPEC_COLOR_MAP_JSON = json.dumps(color_map)  # dict: {specialty: "#hex", ...}
 
-# Ensure we control the div id so JS can attach handlers
-plot_div = fig.to_html(full_html=False, include_plotlyjs='cdn', div_id='cipher-cube')
+plot_div = f"""
+<div id="cipher-cube" class="plotly-graph-div" style="height:820px; width:100%;"></div>
+<script src="https://cdn.plot.ly/plotly-3.1.1.min.js" crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ---- Client-side loader: reproduces your Python-built cube from /data CSV ----
+(function() {{
+  const CSV_PATH = {CSV_URL!r};
+
+  // Your existing time mapping / ordering
+  const TIME_TO_DISPLAY = {{
+    "Time 0": "Hour 0",
+    "Hour Zero": "Hour 0",
+    "First Hour": "Hour 1",
+    "First Day": "Day 1",
+    "First Week": "Week 1",
+    "Week 2": "Week 2",
+    "First Month": "Month 1",
+    "Unknown": "Unknown"
+  }};
+  const TIME_ORDER = ["Time 0","Hour Zero","First Hour","First Day","First Week","Week 2","First Month","Unknown"];
+
+  const safe = (v, f='') => (v === undefined || v === null ? f : String(v));
+  function normTimePoint(s) {{
+    const t = safe(s).trim();
+    const low = t.toLowerCase();
+    if (["time 0","hour zero","zero","t=0"].includes(low)) return "Time 0";
+    if (["first hour","hour 1","1st hour"].includes(low)) return "First Hour";
+    if (["firsy day"].includes(low)) return "First Day";
+    if (["first day","day 1","1st day"].includes(low)) return "First Day";
+    if (["first week","week 1","1st week"].includes(low)) return "First Week";
+    if (["week 2","2nd week"].includes(low)) return "Week 2";
+    if (["first month","month 1","1st month"].includes(low)) return "First Month";
+    if (TIME_TO_DISPLAY[t]) return t;
+    return t || "Unknown";
+  }}
+  function splitSpecialties(s) {{
+    const raw = safe(s).trim();
+    if (!raw) return ["All"];
+    return (raw.replace(/,/g,';').split(';').map(x => x.trim()).filter(Boolean)) || ["All"];
+  }}
+  function indexer(values) {{
+    const uniq = Array.from(new Set(values)).filter(v => v !== "");
+    return {{ order: uniq, toIdx: v => uniq.indexOf(v) }};
+  }}
+  function jitter(n, amt=0.18) {{
+    return Array.from({{length:n}}, () => (Math.random()-0.5)*2*amt);
+  }}
+  function toNum(v, fb=5) {{
+    const x = Number(v);
+    return Number.isFinite(x) ? x : fb;
+  }}
+
+  d3.csv(CSV_PATH).then(raw => {{
+    // 1) Normalize & expand multi-specialty rows (mirrors your Python)
+    let rows = [];
+    raw.forEach(r => {{
+      const specialties = splitSpecialties(r["Speciality"]);
+      specialties.forEach(sp => {{
+        rows.push({{
+          incident:    safe(r["Short Title"]),
+          description: safe(r["Description of Patient Harm"]),
+          time_point:  normTimePoint(r["Time Point"]),
+          specialty:   sp || "All",
+          domain:      safe(r["Technical Domain"]) || "Unknown",
+          ref_title:   safe(r["Reference Title"]),
+          ref_link:    safe(r["Reference Link"]),
+          quote:       safe(r["Direct Quote"]),
+          impact:      toNum(r["Clinical Impact Score"], 5),
+          is_social:   (safe(r["Reference Title"]).trim().toLowerCase() === "social media"),
+          is_general:  (safe(sp).trim().toLowerCase() === "all")
+        }});
+      }});
+    }});
+
+    // 2) Axes & ordering (match your Python ordering)
+    const domains = Array.from(new Set(rows.map(r => r.domain))).sort();
+    const timesInData = Array.from(new Set(rows.map(r => r.time_point)));
+    const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
+    const specialties = Array.from(new Set(rows.map(r => r.specialty))).sort();
+
+    const domainToI = indexer(domains);
+    const timeToI   = indexer(time_axis);
+    const specToI   = indexer(specialties);
+
+    // 3) Same three groups / markers as your Python build
+    const acad_spec    = rows.filter(r => !r.is_social && !r.is_general);
+    const acad_general = rows.filter(r => !r.is_social &&  r.is_general);
+    const social       = rows.filter(r =>  r.is_social);
+
+    function buildTrace(data, name, symbol, baseSize, colorFn) {{
+      const jx = jitter(data.length), jy = jitter(data.length), jz = jitter(data.length);
+      const x = data.map((r,i) => domainToI.toIdx(r.domain)   + jx[i]);
+      const y = data.map((r,i) => timeToI.toIdx(r.time_point) + jy[i]);
+      const z = data.map((r,i) => specToI.toIdx(r.specialty)  + jz[i]);
+      const sizes = data.map(_ => baseSize); // fixed sizes to match your current visuals
+      const colors= data.map(r => colorFn(r));
+      const customdata = data.map(r => ({{
+        short_title: r.incident,
+        description: r.description,
+        time_point:  TIME_TO_DISPLAY[r.time_point] || r.time_point,
+        speciality:  r.specialty,
+        domain:      r.domain,
+        ref_title:   r.ref_title,
+        ref_link:    r.ref_link,
+        quote:       r.quote,
+        impact:      r.impact,
+        isMultiSource: false
+      }}));
+      return {{
+        type: 'scatter3d',
+        mode: 'markers',
+        name,
+        x, y, z,
+        customdata,
+        hovertemplate:
+          "<b>%{{customdata.short_title}}</b><br>" +
+          "Specialty: %{{customdata.speciality}}<br>" +
+          "Time: %{{customdata.time_point}}<br>" +
+          "Domain: %{{customdata.domain}}<br>" +
+          "Impact: %{{customdata.impact}}<extra></extra>",
+        hoverlabel: {{
+          bgcolor: 'rgba(255,255,255,0.9)',
+          font: {{color: 'black'}},
+          bordercolor: '#FF6B6B'
+        }},
+        marker: {{
+          size: sizes,
+          symbol: symbol,
+          color: colors,
+          opacity: 0.88,
+          line: {{width: 0.8, color: 'rgba(255,255,255,0.9)'}}
+        }}
+      }};
+    }}
+
+    // Specialty color map injected from Python so colours match previous build
+    const SPEC_COLOR_MAP = {SPEC_COLOR_MAP_JSON};
+    const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
+
+    const traces = [];
+    if (acad_spec.length)    traces.push(buildTrace(acad_spec,    "Specialty (Academic)",     "circle",  6, r => specColors.get(r.specialty) || '#1f77b4'));
+    if (acad_general.length) traces.push(buildTrace(acad_general, "Affects All Specialties",  "x",       4, _ => 'rgba(255,255,255,0.98)'));
+    if (social.length)       traces.push(buildTrace(social,       "Social Media Reports",     "diamond", 6, _ => 'rgba(255,99,71,0.95)'));
+
+    // Layout: mirrors your Python layout exactly
+    const layout = {{
+      title:'CIPHER Cube: Patient Harm During Hospital Cyberattacks',
+      scene:{{
+        xaxis:{{ title:'Technical Domain', tickvals: domains.map((_,i)=>i), ticktext: domains,
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' }},
+        yaxis:{{ title:'Time Point', tickvals: time_axis.map((_,i)=>i), ticktext: time_axis.map(t => TIME_TO_DISPLAY[t] || t),
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' }},
+        zaxis:{{ title:'Medical Specialty', tickvals: specialties.map((_,i)=>i), ticktext: specialties,
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' }},
+        bgcolor:'black', aspectmode:'cube', dragmode:'orbit'
+      }},
+      paper_bgcolor:'black',
+      font:{{ color:'#111827' }},
+      height:820,
+      margin:{{ l:0, r:0, t:60, b:0 }},
+      showlegend:true,
+      legend:{{
+        orientation:'v', x:1.02, y:1.0, xanchor:'left', yanchor:'top',
+        bgcolor:'rgba(0,0,0,0.88)', bordercolor:'rgba(255,255,255,0.25)',
+        borderwidth:1, font:{{color:'white'}}
+      }}
+    }};
+
+    Plotly.newPlot('cipher-cube', traces, layout, {{responsive:true}});
+  }}).catch(err => {{
+    console.error('CSV load error:', err);
+    const el = document.getElementById('cipher-cube');
+    if (el) el.innerHTML = '<p style="padding:1rem;color:#b91c1c">Error loading data. Check the CSV path/filename and column names.</p>';
+  }});
+}})();
+</script>
+"""
 
 # -----------------------------------------------------------------------------
 
