@@ -437,9 +437,9 @@ plot_div = f"""
     const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
 
     const traces = [];
-    if (acad_spec.length)    traces.push(buildTrace(acad_spec,    "Specialty (Academic)",     "circle",  6, r => specColors.get(r.specialty) || '#1f77b4'));
-    if (acad_general.length) traces.push(buildTrace(acad_general, "Affects All Specialties",  "x",       4, _ => 'rgba(255,255,255,0.98)'));
-    if (social.length)       traces.push(buildTrace(social,       "Social Media Reports",     "diamond", 6, _ => 'rgba(255,99,71,0.95)'));
+    if (acad_spec.length)    traces.push(buildTrace(acad_spec,    "Specialty (Academic)",     "circle",  9, r => specColors.get(r.specialty) || '#1f77b4'));
+    if (acad_general.length) traces.push(buildTrace(acad_general, "Affects All Specialties",  "x",       7, _ => 'rgba(255,255,255,0.98)'));
+    if (social.length)       traces.push(buildTrace(social,       "Social Media Reports",     "diamond", 9, _ => 'rgba(255,99,71,0.95)'));
 
     // Layout: mirrors your Python layout exactly
     const layout = {{
