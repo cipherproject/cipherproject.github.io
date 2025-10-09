@@ -298,7 +298,7 @@ SPEC_COLOR_MAP_JSON = json.dumps(color_map)  # dict: {specialty: "#hex", ...}
 
 plot_div = f"""
 <div id="cipher-cube" class="plotly-graph-div" style="height:820px; width:100%;"></div>
-<script src="https://cdn.plot.ly/plotly-3.1.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 // ---- Client-side loader: reproduces your Python-built cube from /data CSV ----
