@@ -489,7 +489,7 @@ plot_div = f"""
           rowsForSpec,
           specName,            // legend label = specialty
           "circle",
-          12,                  // marker size (tweak if you like)
+          10,                  // marker size (tweak if you like)
           _ => specColors.get(specName) || "#1f77b4"
         )
       );
@@ -502,7 +502,7 @@ plot_div = f"""
           acad_general,
           "Affects All Specialties",
           "x",
-          10,
+          8,
           _ => "rgba(255,255,255,0.98)"
         )
       );
@@ -513,7 +513,7 @@ plot_div = f"""
           social,
           "Social Media Reports",
           "diamond",
-          12,
+          9,
           _ => "rgba(255,99,71,0.95)"
         )
       );
