@@ -371,20 +371,57 @@ plot_div = f"""
       }});
     }});
 
-    // 2) Axes & ordering (match your Python ordering)
-    const domains = Array.from(new Set(rows.map(r => r.domain))).sort();
-    const timesInData = Array.from(new Set(rows.map(r => r.time_point)));
-    const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
-    const specialties = Array.from(new Set(rows.map(r => r.specialty))).sort();
+    // ---- START GROUPING BY SHORT TITLE (collate duplicates into one marker) ----
+    const groups = new Map();
+    rows.forEach(r => {
+      const key = (r.incident || "").trim();
+      if (!key) return;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
 
+    // Representative rows for plotting + multi-source pages for the modal
+    const plotRows = [];
+    const multiSourceInfo = {};
+
+    groups.forEach((arr, key) => {
+      const rep = arr[0];                  // use first row as marker representative
+      plotRows.push({ ...rep, isMultiSource: arr.length > 1 });
+
+      multiSourceInfo[key] = {
+        sources: arr.map(r => ({
+          short_title: r.incident,
+          description: r.description,
+          time_point:  (TIME_TO_DISPLAY[r.time_point] || r.time_point),
+          speciality:  r.specialty,
+          domain:      r.domain,
+          ref_title:   r.ref_title,
+          ref_link:    r.ref_link,
+          quote:       r.quote,
+          impact:      r.impact,
+          isMultiSource: true
+        }))
+      };
+    });
+
+    // Expose for the click handler + arrows
+    window.multiSourceInfo = multiSourceInfo;
+    // ---- END GROUPING BY SHORT TITLE ----
+
+    // 2) Axes & ordering (match your Python ordering)
+    const domains = Array.from(new Set(plotRows.map(r => r.domain))).sort();
+    const timesInData = Array.from(new Set(plotRows.map(r => r.time_point)));
+    const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
+    const specialties = Array.from(new Set(plotRows.map(r => r.specialty))).sort();
+    
     const domainToI = indexer(domains);
     const timeToI   = indexer(time_axis);
     const specToI   = indexer(specialties);
 
-    // 3) Same three groups / markers as your Python build
-    const acad_spec    = rows.filter(r => !r.is_social && !r.is_general);
-    const acad_general = rows.filter(r => !r.is_social &&  r.is_general);
-    const social       = rows.filter(r =>  r.is_social);
+    // 3) Same three groups / markers as Python build
+    const acad_spec    = plotRows.filter(r => !r.is_social && !r.is_general);
+    const acad_general = plotRows.filter(r => !r.is_social &&  r.is_general);
+    const social       = plotRows.filter(r =>  r.is_social);
 
     function buildTrace(data, name, symbol, baseSize, colorFn) {{
       const jx = jitter(data.length), jy = jitter(data.length), jz = jitter(data.length);
@@ -403,7 +440,7 @@ plot_div = f"""
         ref_link:    r.ref_link,
         quote:       r.quote,
         impact:      r.impact,
-        isMultiSource: false
+        isMultiSource: !!r.isMultiSource
       }}));
       return {{
         type: 'scatter3d',
