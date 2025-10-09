@@ -676,68 +676,84 @@ HTML_PAGE = f"""<!doctype html>
     }}
 
     // State for multi-source nav
-    window.currentSourceIndex = 0;
-    window.currentSources = [];
-
+    <!-- BEGIN: Plotly click/hover bindings -->
     <script>
-    window.addEventListener('load', function () {{
-      // re-use debounce defined above
-      const plot = document.getElementById('cipher-cube');
-      if (!plot) return;
+      // State for multi-source nav (kept on window so other scripts can read/write)
+      window.currentSourceIndex = 0;
+      window.currentSources = [];
 
-      function bindWhenReady() {{
-        if (!plot || !plot._fullLayout) {{
-          setTimeout(bindWhenReady, 50);
+      // Attach handlers after Plotly has finished rendering and data/customdata exist.
+      (function attachHandlersWhenReady() {
+        var plot = document.getElementById('cipher-cube');
+
+        // Wait until the div exists AND Plotly has populated layout/data (local loads can be too fast)
+        if (!plot || !(plot.data || plot._fullData)) {
+          setTimeout(attachHandlersWhenReady, 60);
           return;
-        }}
+        }
 
-        plot.on('plotly_hover', debounce(function () {{
+        // Optional: clear any previous bindings if reloading hot
+        if (plot.removeAllListeners) {
+          plot.removeAllListeners('plotly_hover');
+          plot.removeAllListeners('plotly_unhover');
+          plot.removeAllListeners('plotly_click');
+        }
+
+        // Cursor polish on hover
+        plot.on('plotly_hover', debounce(function () {
           document.body.style.cursor = 'pointer';
-        }}, 30));
+        }, 30));
 
-        plot.on('plotly_unhover', debounce(function () {{
+        plot.on('plotly_unhover', debounce(function () {
           document.body.style.cursor = 'default';
-        }}, 50));
+        }, 50));
 
-        plot.on('plotly_click', debounce(function (data) {{
-          if (data.points && data.points[0]) {{
-            var pointData = data.points[0].customdata || {{}};
+        // CLICK -> open modal with either single- or multi-source view
+        plot.on('plotly_click', function (data) {
+          if (!data || !data.points || !data.points[0]) return;
 
-            window.currentSourceIndex = 0;
-            window.currentSources = [];
+          var pointData = data.points[0].customdata || {};
 
-            const isMultiSource = pointData.isMultiSource === true || pointData.isMultiSource === "true";
-            const shortTitle = pointData.short_title;
+          window.currentSourceIndex = 0;
+          window.currentSources = [];
 
-            document.getElementById('infoPanelTitle').textContent = shortTitle || 'Incident';
+          var isMultiSource = (pointData.isMultiSource === true || pointData.isMultiSource === "true");
+          var shortTitle = pointData.short_title;
 
-            const modalContent = document.getElementById('infoPanelContent');
-            if (modalContent) {{
-              if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
-                modalContent.classList.add('modal-border-multi');
-              }} else {{
-                modalContent.classList.remove('modal-border-multi');
-              }}
-            }}
+          var titleEl = document.getElementById('infoPanelTitle');
+          if (titleEl) titleEl.textContent = shortTitle || 'Incident';
 
-            if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
-              window.currentSources = window.multiSourceInfo[shortTitle].sources || [];
-              displayMultiSourcePanel(shortTitle, window.currentSourceIndex);
-              const sourceNav = document.getElementById('sourceNavigation');
-              if (sourceNav) sourceNav.style.display = 'flex';
-            }} else {{
-              const sourceNav = document.getElementById('sourceNavigation');
-              if (sourceNav) sourceNav.style.display = 'none';
-              document.getElementById('infoPanelBody').innerHTML = createSingleSourceModalContent(pointData);
-            }}
+          var modalContent = document.getElementById('infoPanelContent');
+          if (modalContent) {
+            if (isMultiSource && window.multiSourceInfo && window.multiSourceInfo[shortTitle]) {
+              modalContent.classList.add('modal-border-multi');
+            } else {
+              modalContent.classList.remove('modal-border-multi');
+            }
+          }
+    
+          var sourceNav = document.getElementById('sourceNavigation');
 
-            $('#infoPanel').modal('show');
-          }}
-        }}, 250));
-      }}
+          if (isMultiSource && window.multiSourceInfo && window.multiSourceInfo[shortTitle]) {
+            window.currentSources = window.multiSourceInfo[shortTitle].sources || [];
+            displayMultiSourcePanel(shortTitle, window.currentSourceIndex);
+            if (sourceNav) sourceNav.style.display = 'flex';
+          } else {
+            if (sourceNav) sourceNav.style.display = 'none';
+            var bodyEl = document.getElementById('infoPanelBody');
+            if (bodyEl) bodyEl.innerHTML = createSingleSourceModalContent(pointData);
+          }
 
-      bindWhenReady();
-    }});
+          // Show the Bootstrap modal
+          if (window.jQuery && typeof jQuery.fn.modal === 'function') {
+            jQuery('#infoPanel').modal('show');
+          } else {
+            // Fallback if Bootstrap JS failed to load
+            var m = document.getElementById('infoPanel');
+            if (m) m.style.display = 'block';
+          }
+        });
+      })();
     </script>
 
     // Nav buttons
