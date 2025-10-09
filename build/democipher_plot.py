@@ -435,11 +435,52 @@ plot_div = f"""
     // Specialty color map injected from Python so colours match previous build
     const SPEC_COLOR_MAP = {SPEC_COLOR_MAP_JSON};
     const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
-
+    
     const traces = [];
-    if (acad_spec.length)    traces.push(buildTrace(acad_spec,    "Specialty (Academic)",     "circle",  9, r => specColors.get(r.specialty) || '#1f77b4'));
-    if (acad_general.length) traces.push(buildTrace(acad_general, "Affects All Specialties",  "x",       7, _ => 'rgba(255,255,255,0.98)'));
-    if (social.length)       traces.push(buildTrace(social,       "Social Media Reports",     "diamond", 9, _ => 'rgba(255,99,71,0.95)'));
+    // Build one trace per specialty from the academic, specialty-specific rows
+    const bySpec = new Map();
+    acad_spec.forEach(r => {
+      if (!bySpec.has(r.specialty)) bySpec.set(r.specialty, []);
+      bySpec.get(r.specialty).push(r);
+    });
+
+    // Add per-specialty traces so each shows in the legend with its color
+    Array.from(bySpec.keys()).sort().forEach(specName => {
+      const rows = bySpec.get(specName);
+      traces.push(
+        buildTrace(
+          rows,
+          specName,            // legend label = specialty
+          "circle",
+          12,                  // marker size (tweak if you like)
+          _ => specColors.get(specName) || "#1f77b4"
+        )
+      );
+    });
+
+    // Keep these two as single traces
+    if (acad_general.length) {
+      traces.push(
+        buildTrace(
+          acad_general,
+          "Affects All Specialties",
+          "x",
+          10,
+          _ => "rgba(255,255,255,0.98)"
+        )
+      );
+    }
+    if (social.length) {
+      traces.push(
+        buildTrace(
+          social,
+          "Social Media Reports",
+          "diamond",
+          12,
+          _ => "rgba(255,99,71,0.95)"
+        )
+      );
+    }
 
     // Layout: mirrors your Python layout exactly
     const layout = {{
