@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 # Configuration and setup
@@ -292,7 +292,7 @@ layout = go.Layout(
 )
 
 # Build a div + client-side loader that fetches your CSV at runtime
-VERSION = datetime.utcnow().strftime("%Y%m%d%H%M%S")  # cache-buster so Pages/CDN serves fresh CSV
+VERSION = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
 CSV_URL = f"{CSV_PATH}?v={VERSION}"
 SPEC_COLOR_MAP_JSON = json.dumps(color_map)  # dict: {specialty: "#hex", ...}
 
@@ -373,23 +373,23 @@ plot_div = f"""
 
     // ---- START GROUPING BY SHORT TITLE (collate duplicates into one marker) ----
     const groups = new Map();
-    rows.forEach(r => {
+    rows.forEach(r => {{
       const key = (r.incident || "").trim();
       if (!key) return;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(r);
-    });
+    }});
 
     // Representative rows for plotting + multi-source pages for the modal
     const plotRows = [];
-    const multiSourceInfo = {};
+    const multiSourceInfo = {{}};
 
-    groups.forEach((arr, key) => {
+    groups.forEach((arr, key) => {{
       const rep = arr[0];                  // use first row as marker representative
-      plotRows.push({ ...rep, isMultiSource: arr.length > 1 });
+      plotRows.push({{ ...rep, isMultiSource: arr.length > 1 }});
 
-      multiSourceInfo[key] = {
-        sources: arr.map(r => ({
+      multiSourceInfo[key] = {{
+        sources: arr.map(r => ({{
           short_title: r.incident,
           description: r.description,
           time_point:  (TIME_TO_DISPLAY[r.time_point] || r.time_point),
@@ -400,9 +400,9 @@ plot_div = f"""
           quote:       r.quote,
           impact:      r.impact,
           isMultiSource: true
-        }))
-      };
-    });
+        }}))
+      }};
+    }});
 
     // Expose for the click handler + arrows
     window.multiSourceInfo = multiSourceInfo;
@@ -413,7 +413,7 @@ plot_div = f"""
     const timesInData = Array.from(new Set(plotRows.map(r => r.time_point)));
     const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
     const specialties = Array.from(new Set(plotRows.map(r => r.specialty))).sort();
-    
+
     const domainToI = indexer(domains);
     const timeToI   = indexer(time_axis);
     const specToI   = indexer(specialties);
@@ -472,31 +472,31 @@ plot_div = f"""
     // Specialty color map injected from Python so colours match previous build
     const SPEC_COLOR_MAP = {SPEC_COLOR_MAP_JSON};
     const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
-    
+
     const traces = [];
     // Build one trace per specialty from the academic, specialty-specific rows
     const bySpec = new Map();
-    acad_spec.forEach(r => {
+    acad_spec.forEach(r => {{
       if (!bySpec.has(r.specialty)) bySpec.set(r.specialty, []);
       bySpec.get(r.specialty).push(r);
-    });
+    }});
 
     // Add per-specialty traces so each shows in the legend with its color
-    Array.from(bySpec.keys()).sort().forEach(specName => {
-      const rows = bySpec.get(specName);
+    Array.from(bySpec.keys()).sort().forEach(specName => {{
+      const rowsForSpec = bySpec.get(specName);
       traces.push(
         buildTrace(
-          rows,
+          rowsForSpec,
           specName,            // legend label = specialty
           "circle",
           12,                  // marker size (tweak if you like)
           _ => specColors.get(specName) || "#1f77b4"
         )
       );
-    });
+    }});
 
     // Keep these two as single traces
-    if (acad_general.length) {
+    if (acad_general.length) {{
       traces.push(
         buildTrace(
           acad_general,
@@ -506,8 +506,8 @@ plot_div = f"""
           _ => "rgba(255,255,255,0.98)"
         )
       );
-    }
-    if (social.length) {
+    }}
+    if (social.length) {{
       traces.push(
         buildTrace(
           social,
@@ -517,7 +517,7 @@ plot_div = f"""
           _ => "rgba(255,99,71,0.95)"
         )
       );
-    }
+    }}
 
     // Layout: mirrors your Python layout exactly
     const layout = {{
