@@ -676,62 +676,71 @@ HTML_PAGE = f"""<!doctype html>
     }}
 
     // State for multi-source nav
-    let currentSourceIndex = 0;
-    let currentSources = [];
+    window.currentSourceIndex = 0;
+    window.currentSources = [];
 
-    // Attach to the specific div id we set from Python
-    const plot = document.getElementById('cipher-cube');
+    window.addEventListener('load', function () {
+      // re-use debounce defined above
+      const plot = document.getElementById('cipher-cube');
+      if (!plot) return;
 
-    if (plot) {{
-      plot.on('plotly_hover', debounce(function() {{
-        document.body.style.cursor = 'pointer';
-      }}, 30));
+      // If the plot is not yet fully initialized, retry shortly
+      function bindWhenReady() {
+        // plotly adds internal properties once the graph is ready
+        if (!plot || !plot._fullLayout) {
+          setTimeout(bindWhenReady, 50);
+          return;
+        }
 
-      plot.on('plotly_unhover', debounce(function() {{
-        document.body.style.cursor = 'default';
-      }}, 50));
+        plot.on('plotly_hover', debounce(function () {
+          document.body.style.cursor = 'pointer';
+        }, 30));
 
-      // Click => show modal for 3D cube with multi-source support (your logic preserved)
-      plot.on('plotly_click', debounce(function(data) {{
-        if (data.points && data.points[0]) {{
-          var pointData = data.points[0].customdata || {{}};
+        plot.on('plotly_unhover', debounce(function () {
+          document.body.style.cursor = 'default';
+        }, 50));
 
-          // Reset multi-source state
-          currentSourceIndex = 0;
-          currentSources = [];
+        plot.on('plotly_click', debounce(function (data) {
+          if (data.points && data.points[0]) {
+            var pointData = data.points[0].customdata || {};
 
-          // Determine multi-source from point flag and global map
-          const isMultiSource = pointData.isMultiSource === true || pointData.isMultiSource === "true";
-          const shortTitle = pointData.short_title;
+            // Reset multi-source state
+            window.currentSourceIndex = 0;
+            window.currentSources = [];
 
-          // Title
-          document.getElementById('infoPanelTitle').textContent = shortTitle || 'Incident';
+            const isMultiSource = pointData.isMultiSource === true || pointData.isMultiSource === "true";
+            const shortTitle = pointData.short_title;
 
-          // Special styling for multi-source vs single
-          const modalContent = document.getElementById('infoPanelContent');
-          if (modalContent) {{
-            if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
-              modalContent.classList.add('modal-border-multi');
-            }} else {{
-              modalContent.classList.remove('modal-border-multi');
-            }}
-          }}
+            document.getElementById('infoPanelTitle').textContent = shortTitle || 'Incident';
 
-          if (isMultiSource && window.multiSourceInfo[shortTitle]) {{
-            currentSources = window.multiSourceInfo[shortTitle].sources || [];
-            displayMultiSourcePanel(shortTitle, currentSourceIndex);
-            const sourceNav = document.getElementById('sourceNavigation');
-            if (sourceNav) sourceNav.style.display = 'flex';
-          }} else {{
-            const sourceNav = document.getElementById('sourceNavigation');
-            if (sourceNav) sourceNav.style.display = 'none';
-            document.getElementById('infoPanelBody').innerHTML = createSingleSourceModalContent(pointData);
-          }}
+            const modalContent = document.getElementById('infoPanelContent');
+            if (modalContent) {
+              if (isMultiSource && window.multiSourceInfo[shortTitle]) {
+                modalContent.classList.add('modal-border-multi');
+              } else {
+                modalContent.classList.remove('modal-border-multi');
+              }
+            }
 
-          $('#infoPanel').modal('show');
-        }}
-      }}, 250));
-    }}
+            if (isMultiSource && window.multiSourceInfo[shortTitle]) {
+              window.currentSources = window.multiSourceInfo[shortTitle].sources || [];
+              displayMultiSourcePanel(shortTitle, window.currentSourceIndex);
+              const sourceNav = document.getElementById('sourceNavigation');
+              if (sourceNav) sourceNav.style.display = 'flex';
+            } else {
+              const sourceNav = document.getElementById('sourceNavigation');
+              if (sourceNav) sourceNav.style.display = 'none';
+              document.getElementById('infoPanelBody').innerHTML = createSingleSourceModalContent(pointData);
+            }
+
+            $('#infoPanel').modal('show');
+          }
+        }, 250));
+      }
+
+      bindWhenReady();
+    });
+
 
     // Nav buttons
     const prevSourceBtn = document.getElementById('prevSource');
