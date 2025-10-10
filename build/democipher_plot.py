@@ -354,7 +354,7 @@ plot_div = f"""
     raw.forEach((r, idx) => {{
       const specialties = splitSpecialties(r["Speciality"]);
       specialties.forEach(sp => {{
-        rows.push({
+        rows.push({{
           // carry original CSV row id and raw specialty list
           orig_id: idx,
           specialty_raw: safe(r["Speciality"]),
@@ -768,7 +768,7 @@ HTML_PAGE = f"""<!doctype html>
     }}
 
     // Fallback single-source renderer (used if your site-specific function isn't injected)
-      function createSingleSourceModalContent(cd) {
+      function createSingleSourceModalContent(cd) {{
           const safe = (v) => (v === undefined || v === null) ? '' : String(v);
           const isSocial =
             (cd && (cd.is_social === true || String(cd.ref_title || '').trim().toLowerCase() === 'social media'));
