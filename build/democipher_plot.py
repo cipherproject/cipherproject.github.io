@@ -351,10 +351,14 @@ plot_div = f"""
   d3.csv(CSV_PATH).then(raw => {{
     // 1) Normalize & expand multi-specialty rows (mirrors your Python)
     let rows = [];
-    raw.forEach(r => {{
+    raw.forEach((r, idx) => {{
       const specialties = splitSpecialties(r["Speciality"]);
       specialties.forEach(sp => {{
         rows.push({{
+          // carry original CSV row id and raw specialty list
+          orig_id: idx,
+          specialty_raw: safe(r["Speciality"]),
+
           incident:    safe(r["Short Title"]),
           description: safe(r["Description of Patient Harm"]),
           time_point:  normTimePoint(r["Time Point"]),
@@ -383,28 +387,57 @@ plot_div = f"""
     const multiSourceInfo = {{}};
 
     groups.forEach((arr, key) => {{
-      const rep = arr[0];                  // use first row as marker representative
-      plotRows.push({{ ...rep, isMultiSource: arr.length > 1 }});
+      // 1) De-duplicate by original CSV row id so multi-specialty splits don't create extra sources
+      const byOrig = new Map();
+      arr.forEach(r => {{
+        if (!byOrig.has(r.orig_id)) byOrig.set(r.orig_id, []);
+        byOrig.get(r.orig_id).push(r);
+      }});
 
-      multiSourceInfo[key] = {{
-        sources: arr.map(r => ({{
-          short_title: r.incident,
-          description: r.description,
-          time_point:  (TIME_TO_DISPLAY[r.time_point] || r.time_point),
-          speciality:  r.specialty,
-          domain:      r.domain,
-          ref_title:   r.ref_title,
-          quote:       r.quote,
-          impact:      r.impact,
+      // 2) Build one source per original CSV row
+      const uniqueSources = [];
+      byOrig.forEach((variants /* same orig row across specialties */) => {{
+        // choose a display specialty per original row
+        const rawList = splitSpecialties(variants[0].specialty_raw || "");
+        const hasMultiple = rawList.length > 1;    
+        const preferred = variants.map(v => v.specialty).find(s => s && s.toLowerCase() !== "all");
+        const displaySpecialty = hasMultiple ? "Multiple" : (preferred || (rawList[0] || "All"));
+
+        const base = variants[0]; // content identical across specialties for same row
+        uniqueSources.push({{
+          short_title: base.incident,
+          description: base.description,
+          time_point:  (TIME_TO_DISPLAY[base.time_point] || base.time_point),
+          speciality:  displaySpecialty,
+          domain:      base.domain,
+          ref_title:   base.ref_title,
+          quote:       base.quote,
+          impact:      base.impact,
           isMultiSource: true,
-          is_social: r.is_social
-        }}))
-      }};
+          is_social:    base.is_social
+        }});
+      }});
+
+      // 3) Pick a representative row for plotting this *single* marker
+      const repSource =
+        uniqueSources.find(s => s.speciality && s.speciality.toLowerCase() !== "all") ||
+        uniqueSources[0];
+
+      // Find a variant that matches the chosen display specialty; else fall back safely
+      const repVariant =
+        arr.find(r => r.specialty === repSource.speciality) ||
+        arr[0];
+
+      plotRows.push({{ ...repVariant, specialty: repSource.speciality, isMultiSource: uniqueSources.length > 1 }});
+
+      // 4) Save sources for the modal arrows
+      multiSourceInfo[key] = {{ sources: uniqueSources }};
     }});
 
     // Expose for the click handler + arrows
     window.multiSourceInfo = multiSourceInfo;
     // ---- END GROUPING BY SHORT TITLE ----
+
 
     // 2) Axes & ordering (match your Python ordering)
     const domains = Array.from(new Set(plotRows.map(r => r.domain))).sort();
