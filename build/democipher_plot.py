@@ -354,21 +354,21 @@ plot_div = f"""
     raw.forEach((r, idx) => {{
       const specialties = splitSpecialties(r["Speciality"]);
       specialties.forEach(sp => {{
-        rows.push({{
+        rows.push({
           // carry original CSV row id and raw specialty list
           orig_id: idx,
           specialty_raw: safe(r["Speciality"]),
-
           incident:    safe(r["Short Title"]),
           description: safe(r["Description of Patient Harm"]),
           time_point:  normTimePoint(r["Time Point"]),
           specialty:   sp || "All",
           domain:      safe(r["Technical Domain"]) || "Unknown",
           ref_title:   safe(r["Reference Title"]),
+          ref_link:    safe(r["Reference Link"] || r["URL"] || r["Link"] || ""), 
           quote:       safe(r["Direct Quote"]),
           impact:      toNum(r["Clinical Impact Score"], 5),
           is_social:   (safe(r["Reference Title"]).trim().toLowerCase() === "social media"),
-          is_general:  (safe(sp).trim().toLowerCase() === "all")
+          is_general:  (safe(sp).trim().toLowerCase() === "all")    
         }});
       }});
     }});
@@ -411,6 +411,7 @@ plot_div = f"""
           speciality:  displaySpecialty,
           domain:      base.domain,
           ref_title:   base.ref_title,
+          ref_link:    base.ref_link,
           quote:       base.quote,
           impact:      base.impact,
           isMultiSource: true,
@@ -473,6 +474,7 @@ plot_div = f"""
         speciality:  r.specialty,
         domain:      r.domain,
         ref_title:   r.ref_title,
+        ref_link:    r.ref_link, 
         quote:       r.quote,
         impact:      r.impact,
         isMultiSource: !!r.isMultiSource,
@@ -766,29 +768,33 @@ HTML_PAGE = f"""<!doctype html>
     }}
 
     // Fallback single-source renderer (used if your site-specific function isn't injected)
-    function createSingleSourceModalContent(cd) {{
-      const safe = (v) => (v === undefined || v === null) ? '' : String(v);
-      const isSocial = (cd && (cd.is_social === true || String(cd.ref_title || '').trim().toLowerCase() === 'social media'));
+      function createSingleSourceModalContent(cd) {
+          const safe = (v) => (v === undefined || v === null) ? '' : String(v);
+          const isSocial =
+            (cd && (cd.is_social === true || String(cd.ref_title || '').trim().toLowerCase() === 'social media'));
 
-      // Reference line rules:
-      // - Social media: fixed text (no link)
-      // - Otherwise: show plain title if present
-      const refHtml = isSocial
-        ? `<p><b>Reference:</b> Social Media (Deidentified, link removed)</p>`
-        : (cd && cd.ref_title && String(cd.ref_title).trim()
-            ? `<p><b>Reference:</b> ${{safe(cd.ref_title)}}</p>`
-            : '');
+          const hasTitle = cd && String(cd.ref_title || '').trim().length > 0;
+          const hasLink  = cd && String(cd.ref_link  || '').trim().length > 0;
 
-      const quoteHtml = cd && cd.quote
-        ? `<blockquote class="blockquote" style="font-size:0.95rem;">${{cd.quote}}</blockquote>`
-        : '';
+          const refHtml = isSocial
+            ? `<p><b>Reference:</b> Social Media (Deidentified, link removed)</p>`
+            : (hasTitle
+                ? (hasLink
+                    ? `<p><b>Reference:</b> <a href="${{safe(cd.ref_link)}}" target="_blank" rel="noopener">${{safe(cd.ref_title)}}</a></p>`
+                    : `<p><b>Reference:</b> ${{safe(cd.ref_title)}}</p>`
+                  )
+                : '');
 
-      return `
-        <p><b>Specialty:</b> ${{safe(cd.speciality)}} &nbsp; | &nbsp; <b>Time:</b> ${{safe(cd.time_point)}} &nbsp; | &nbsp; <b>Domain:</b> ${{safe(cd.domain)}} &nbsp; | &nbsp; <b>Impact:</b> ${{safe(cd.impact)}}</p>
-        <p>${{safe(cd.description)}}</p>
-        ${{refHtml}}
-        ${{quoteHtml}}
-      `;
+          const quoteHtml = cd && cd.quote
+            ? `<blockquote class="blockquote" style="font-size:0.95rem;">${{cd.quote}}</blockquote>`
+            : '';
+
+          return `
+            <p><b>Specialty:</b> ${{safe(cd.speciality)}} &nbsp; | &nbsp; <b>Time:</b> ${{safe(cd.time_point)}} &nbsp; | &nbsp; <b>Domain:</b> ${{safe(cd.domain)}} &nbsp; | &nbsp; <b>Impact:</b> ${{safe(cd.impact)}}</p>
+            <p>${{safe(cd.description)}}</p>
+            ${{refHtml}}
+            ${{quoteHtml}}
+          `;
     }}
 
     // Optional multi-source renderer stub (page can override with richer logic)
