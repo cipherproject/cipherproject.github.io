@@ -66,7 +66,6 @@ df_raw = pd.read_csv(CSV_PATH)
 # Rename columns to internal names (df / csv headers)
 rename_map = {
     'Reference Title': 'ref_title',
-    'Reference Link':  'ref_link',
     'Short Title':     'incident',
     'Description of Patient Harm': 'description',
     'Direct Quote':    'quote',
@@ -362,7 +361,6 @@ plot_div = f"""
           specialty:   sp || "All",
           domain:      safe(r["Technical Domain"]) || "Unknown",
           ref_title:   safe(r["Reference Title"]),
-          ref_link:    safe(r["Reference Link"]),
           quote:       safe(r["Direct Quote"]),
           impact:      toNum(r["Clinical Impact Score"], 5),
           is_social:   (safe(r["Reference Title"]).trim().toLowerCase() === "social media"),
@@ -396,10 +394,10 @@ plot_div = f"""
           speciality:  r.specialty,
           domain:      r.domain,
           ref_title:   r.ref_title,
-          ref_link:    r.ref_link,
           quote:       r.quote,
           impact:      r.impact,
-          isMultiSource: true
+          isMultiSource: true,
+          is_social: r.is_social
         }}))
       }};
     }});
@@ -437,10 +435,10 @@ plot_div = f"""
         speciality:  r.specialty,
         domain:      r.domain,
         ref_title:   r.ref_title,
-        ref_link:    r.ref_link,
         quote:       r.quote,
         impact:      r.impact,
-        isMultiSource: !!r.isMultiSource
+        isMultiSource: !!r.isMultiSource,
+        is_social: r.is_social
       }}));
       return {{
         type: 'scatter3d',
@@ -732,14 +730,25 @@ HTML_PAGE = f"""<!doctype html>
     // Fallback single-source renderer (used if your site-specific function isn't injected)
     function createSingleSourceModalContent(cd) {{
       const safe = (v) => (v === undefined || v === null) ? '' : String(v);
-      const linkHtml = cd.ref_link 
-        ? `<p><b>Reference:</b> <a href="${{cd.ref_link}}" target="_blank" rel="noopener">${{safe(cd.ref_title) || 'Source'}}</a></p>`
-        : `<p><b>Reference:</b> ${{safe(cd.ref_title)}}</p>`;
-      const quoteHtml = cd.quote ? `<blockquote class="blockquote" style="font-size:0.95rem;">${{cd.quote}}</blockquote>` : '';
+      const isSocial = (cd && (cd.is_social === true || String(cd.ref_title || '').trim().toLowerCase() === 'social media'));
+
+      // Reference line rules:
+      // - Social media: fixed text (no link)
+      // - Otherwise: show plain title if present
+      const refHtml = isSocial
+        ? `<p><b>Reference:</b> Social Media (Deidentified, link removed)</p>`
+        : (cd && cd.ref_title && String(cd.ref_title).trim()
+            ? `<p><b>Reference:</b> ${{safe(cd.ref_title)}}</p>`
+            : '');
+
+      const quoteHtml = cd && cd.quote
+        ? `<blockquote class="blockquote" style="font-size:0.95rem;">${{cd.quote}}</blockquote>`
+        : '';
+
       return `
         <p><b>Specialty:</b> ${{safe(cd.speciality)}} &nbsp; | &nbsp; <b>Time:</b> ${{safe(cd.time_point)}} &nbsp; | &nbsp; <b>Domain:</b> ${{safe(cd.domain)}} &nbsp; | &nbsp; <b>Impact:</b> ${{safe(cd.impact)}}</p>
         <p>${{safe(cd.description)}}</p>
-        ${{linkHtml}}
+        ${{refHtml}}
         ${{quoteHtml}}
       `;
     }}
