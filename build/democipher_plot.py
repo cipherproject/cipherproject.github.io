@@ -424,19 +424,19 @@ plot_div = f"""
     );
 
     // If there are no specialty-specific rows (only "All"), put a single general marker
-    if (groupSpecs.length === 0 && arr.some(r => r.is_general)) {
+    if (groupSpecs.length === 0 && arr.some(r => r.is_general)) {{
       const gen = arr.find(r => r.is_general) || arr[0];
-      plotRows.push({ ...gen, isMultiSource: uniqueSources.length > 1 });
-    } else {
-      groupSpecs.forEach(specName => {
+      plotRows.push({{ ...gen, isMultiSource: uniqueSources.length > 1 }});
+    }} else {{
+      groupSpecs.forEach(specName => {{
         // Find a variant row that already sits on this specialty plane
         const rv = arr.find(r => r.specialty === specName) || arr[0];
-        plotRows.push({ ...rv, specialty: specName, isMultiSource: uniqueSources.length > 1 });
-      });
-    }
+        plotRows.push({{ ...rv, specialty: specName, isMultiSource: uniqueSources.length > 1 }});
+      }});
+    }}
 
     // 4) Save sources for the modal arrows (unchanged)
-    multiSourceInfo[key] = { sources: uniqueSources };
+    multiSourceInfo[key] = {{ sources: uniqueSources }};
     
     // Expose for the click handler + arrows
     window.multiSourceInfo = multiSourceInfo;
