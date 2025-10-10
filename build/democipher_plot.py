@@ -418,22 +418,26 @@ plot_div = f"""
         }});
       }});
 
-      // 3) Pick a representative row for plotting this *single* marker
-      const repSource =
-        uniqueSources.find(s => s.speciality && s.speciality.toLowerCase() !== "all") ||
-        uniqueSources[0];
+      // 3) Place a marker on each specialty plane present in this group (exclude "All")
+    const groupSpecs = Array.from(
+      new Set(arr.filter(r => !r.is_general).map(r => r.specialty))
+    );
 
-      // Find a variant that matches the chosen display specialty; else fall back safely
-      const repVariant =
-        arr.find(r => r.specialty === repSource.speciality) ||
-        arr[0];
+    // If there are no specialty-specific rows (only "All"), put a single general marker
+    if (groupSpecs.length === 0 && arr.some(r => r.is_general)) {
+      const gen = arr.find(r => r.is_general) || arr[0];
+      plotRows.push({ ...gen, isMultiSource: uniqueSources.length > 1 });
+    } else {
+      groupSpecs.forEach(specName => {
+        // Find a variant row that already sits on this specialty plane
+        const rv = arr.find(r => r.specialty === specName) || arr[0];
+        plotRows.push({ ...rv, specialty: specName, isMultiSource: uniqueSources.length > 1 });
+      });
+    }
 
-      plotRows.push({{ ...repVariant, specialty: repSource.speciality, isMultiSource: uniqueSources.length > 1 }});
-
-      // 4) Save sources for the modal arrows
-      multiSourceInfo[key] = {{ sources: uniqueSources }};
-    }});
-
+    // 4) Save sources for the modal arrows (unchanged)
+    multiSourceInfo[key] = { sources: uniqueSources };
+    
     // Expose for the click handler + arrows
     window.multiSourceInfo = multiSourceInfo;
     // ---- END GROUPING BY SHORT TITLE ----
