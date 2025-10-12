@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CIPHER Cube · Patient Harm During Hospital Cyberattacks</title>
+  <meta name="description" content="Interactive 3D map of documented patient harms during hospital cyberattacks, combining academic literature and social media reports."/>
+
+  <!-- Bootstrap for the modal (GitHub Pages safe) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"/>
+
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #6b7280;
+      --panel: #0f172a;     /* navy panels for info cards */
+      --panel-ink: #e5e7eb;
+      --accent: #2563eb;
+    }
+    html, body {
+      margin: 0; padding: 0;
+      background: #ffffff;
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 24px; }
+    .title { font-weight: 800; font-size: clamp(28px,5vw,42px); letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); max-width: 72ch; }
+    .badge-lite { display:inline-block; padding: 6px 10px; border-radius: 999px; background:#eef2ff; color:#3730a3; font-size:12px; border:1px solid #c7d2fe; }
+
+    .panel {
+      background: var(--panel);
+      color: var(--panel-ink);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+    }
+
+    /* PURE BLACK panel for the plot */
+    .panel-plot {
+      background: #000000;
+      color: #e5e7eb; /* labels above the plot */
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .legend-note { color: #cbd5e1; font-size: 14px; }
+    .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    @media(min-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Modal polish */
+    .modal-border-multi { border-left: 6px solid #f59e0b; }
+    .modal-body p { margin-bottom: 0.5rem; }
+  </style>
+
+</head>
+<body>
+  <div class="wrap">
+    <header style="margin: 24px 0 18px; text-align:center">
+      <span class="badge-lite">CIPHER Platform</span>
+      <h1 class="title" style="margin:10px 0 6px;">The CIPHER Cube Models</h1>
+      <p class="text-sm mb-4">
+        <b>CIPHER</b> was built to model <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse during IT downtime at healthcare organisations.
+        To do this, our research collected examples of patient harms occuring during healthcare cyberattacks from diverse data sources, to form one combined
+        <b>'CIPHER database' </b>.
+        The CIPHER models on this page draw from our two key datasets: <b>(1) The "Hospital Attacks"</b> dataset (a systematic review of
+        global papers reporting healthcare cyberattacks), and <b>(2) The "Patient Harms"</b> dataset (extracted through data mining social media posts). 
+        From these two sources we created the full <b>CIPHER dataset</b>, available in the data folder in the GitHub Repo,
+        which provides over <b>300 patient-level harms</b> reported to have occured following a healthcare cyberattack.
+      </p>
+      <p class="text-sm mb-4">
+        Below you will find the <b>interactive "Hospital at Ransom" cube</b>, which is a demo model built from the CIPHER database, developed for a hypothetical hospital context.
+        For these models to be effective for local hospital context, users would need to update the underlying data for the likely clinical impact in their hospitals. 
+        For instance, we have assigned 'Clinical Impact' scores to each patient safety incident in the CIPHER dataset, based on the likely effect in our hypothetical hospital (e.g. this hospital
+        has a heavy reliance on e-Prescribing in the ER, thus loss of digital drug release would have a high degree of impact). By downloading the underlying datasets
+        and contextualising impact for local circumstances, users can utilise the database of cyberattack-induced patient safety incidents and tailor the model to their environment.
+      </p>
+      <p class="text-sm mb-4">
+        The demo model provides an approach for <b>minimising clinical surprise</b> during
+        hospital cyberattacks, by predicting potential adverse events from hour 1 of the cyberattack, to day 28. 
+        Users can filted the model to examine harms relevant to <b>specifical technical domains</b> (e.g. safety incidents related to loss of the laboratory systems) or <b>specific clinical areas</b> (e.g. harms likely to occur on paediatrics wards).
+        The full models on the <a href="https://www.thecipherplatform.com">project website</a> can also be manipulated to plot the 'Clinical Impact' scores on the Y axis,
+        thus providing time-series predictions of potential clinical harm over time (from 24 hours to Day 28).
+        By showcasing these diverse events, assigning clinical impact scores and identifying
+        the at-risk patient groups and necessary medical interventions, these models can be used to enhance Cyberattack incident response processes to protect patient care.
+      </p>
+      <p class="text-sm mb-4">
+        <b>Click on each <u>data point</u> below to view an <u>information pane</u> detailing the safety incident, and links to underlying source material</b> 
+      </p>
+    </header>
+
+    <section class="panel panel-plot">
+      <h3 style="margin-top:0; color:#e5e7eb;">The "Hospital At Ransom" Cube</h3>
+      <p class="legend-note">
+      The 3D visualisation maps document patient harms during hospital cyberattacks. 
+      Each data point on the 3D visulisation represents a specific patient safety incident, which you can <b>hover</b> over for brief information, 
+      or <b><u>click on the data point</b></u> for the full details and background sources.
+      </p>      
+      <p class="legend-note">• <b>● Circles</b>: Academic (specialty-specific) &nbsp; • <b>✕ X</b>: Affects all specialties &nbsp; • <b>♦ Diamonds</b>: Social media reports</p>
+      <div style="margin-top:10px;">
+        
+<div id="cipher-cube" class="plotly-graph-div" style="height:820px; width:100%;"></div>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ---- Client-side loader: reproduces your Python-built cube from /data CSV ----
+(function() {
+  const CSV_PATH = 'data/v1_cipherdata_latest.csv?v=20251012190747';
+
+  // Your existing time mapping / ordering
+  const TIME_TO_DISPLAY = {
+    "Time 0": "Hour 0",
+    "Hour Zero": "Hour 0",
+    "First Hour": "Hour 1",
+    "First Day": "Day 1",
+    "First Week": "Week 1",
+    "Week 2": "Week 2",
+    "First Month": "Month 1",
+    "Unknown": "Unknown"
+  };
+  const TIME_ORDER = ["Time 0","Hour Zero","First Hour","First Day","First Week","Week 2","First Month","Unknown"];
+
+  const safe = (v, f='') => (v === undefined || v === null ? f : String(v));
+  function normTimePoint(s) {
+    const t = safe(s).trim();
+    const low = t.toLowerCase();
+    if (["time 0","hour zero","zero","t=0"].includes(low)) return "Time 0";
+    if (["first hour","hour 1","1st hour"].includes(low)) return "First Hour";
+    if (["firsy day"].includes(low)) return "First Day";
+    if (["first day","day 1","1st day"].includes(low)) return "First Day";
+    if (["first week","week 1","1st week"].includes(low)) return "First Week";
+    if (["week 2","2nd week"].includes(low)) return "Week 2";
+    if (["first month","month 1","1st month"].includes(low)) return "First Month";
+    if (TIME_TO_DISPLAY[t]) return t;
+    return t || "Unknown";
+  }
+  function splitSpecialties(s) {
+    const raw = safe(s).trim();
+    if (!raw) return ["All"];
+    return (raw.replace(/,/g,';').split(';').map(x => x.trim()).filter(Boolean)) || ["All"];
+  }
+  function indexer(values) {
+    const uniq = Array.from(new Set(values)).filter(v => v !== "");
+    return { order: uniq, toIdx: v => uniq.indexOf(v) };
+  }
+  function jitter(n, amt=0.18) {
+    return Array.from({length:n}, () => (Math.random()-0.5)*2*amt);
+  }
+  function toNum(v, fb=5) {
+    const x = Number(v);
+    return Number.isFinite(x) ? x : fb;
+  }
+
+  d3.csv(CSV_PATH).then(raw => {
+    // 1) Normalize & expand multi-specialty rows (mirrors your Python)
+    let rows = [];
+    raw.forEach((r, idx) => {
+      const specialties = splitSpecialties(r["Speciality"]);
+      specialties.forEach(sp => {
+        rows.push({
+          // carry original CSV row id and raw specialty list
+          orig_id: idx,
+          specialty_raw: safe(r["Speciality"]),
+          incident:    safe(r["Short Title"]),
+          description: safe(r["Description of Patient Harm"]),
+          time_point:  normTimePoint(r["Time Point"]),
+          specialty:   sp || "All",
+          domain:      safe(r["Technical Domain"]) || "Unknown",
+          ref_title:   safe(r["Reference Title"]),
+          ref_link:    safe(r["Reference Link"] || r["URL"] || r["Link"] || ""), 
+          quote:       safe(r["Direct Quote"]),
+          impact:      toNum(r["Clinical Impact Score"], 5),
+          is_social:   (safe(r["Reference Title"]).trim().toLowerCase() === "social media"),
+          is_general:  (safe(sp).trim().toLowerCase() === "all")    
+        });
+      });
+    });
+
+    // ---- START GROUPING BY SHORT TITLE (collate duplicates into one marker) ----
+    const groups = new Map();
+    rows.forEach(r => {
+      const key = (r.incident || "").trim();
+      if (!key) return;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+
+    // Representative rows for plotting + multi-source pages for the modal
+    const plotRows = [];
+    const multiSourceInfo = {};
+
+    groups.forEach((arr, key) => {
+      // 1) De-duplicate by original CSV row id so multi-specialty splits don't create extra sources
+      const byOrig = new Map();
+      arr.forEach(r => {
+        if (!byOrig.has(r.orig_id)) byOrig.set(r.orig_id, []);
+        byOrig.get(r.orig_id).push(r);
+      });
+
+      // 2) Build one source per original CSV row
+      const uniqueSources = [];
+      byOrig.forEach((variants /* same orig row across specialties */) => {
+        // choose a display specialty per original row
+        const rawList = splitSpecialties(variants[0].specialty_raw || "");
+        const hasMultiple = rawList.length > 1;    
+        const preferred = variants.map(v => v.specialty).find(s => s && s.toLowerCase() !== "all");
+        const displaySpecialty = hasMultiple ? "Multiple" : (preferred || (rawList[0] || "All"));
+
+        const base = variants[0]; // content identical across specialties for same row
+        uniqueSources.push({
+          short_title: base.incident,
+          description: base.description,
+          time_point:  (TIME_TO_DISPLAY[base.time_point] || base.time_point),
+          speciality:  displaySpecialty,
+          domain:      base.domain,
+          ref_title:   base.ref_title,
+          ref_link:    base.ref_link,
+          quote:       base.quote,
+          impact:      base.impact,
+          isMultiSource: true,
+          is_social:    base.is_social
+        });
+      });
+
+      // 3) Place a marker on each specialty plane present in this group (exclude "All")
+        const groupSpecs = Array.from(
+          new Set(arr.filter(r => !r.is_general).map(r => r.specialty))
+        );
+
+        // If there are no specialty-specific rows (only "All"), put a single general marker
+        if (groupSpecs.length === 0 && arr.some(r => r.is_general)) {
+          const gen = arr.find(r => r.is_general) || arr[0];
+          plotRows.push({ ...gen, isMultiSource: uniqueSources.length > 1 });
+        } else {
+          groupSpecs.forEach(specName => {
+            // Find a variant row that already sits on this specialty plane
+            const rv = arr.find(r => r.specialty === specName) || arr[0];
+            plotRows.push({ ...rv, specialty: specName, isMultiSource: uniqueSources.length > 1 });
+          });
+        }
+
+        // 4) Save sources for the modal arrows (unchanged)
+        multiSourceInfo[key] = { sources: uniqueSources };
+    });
+    
+    // Expose for the click handler + arrows
+    window.multiSourceInfo = multiSourceInfo;
+    // ---- END GROUPING BY SHORT TITLE ----
+
+
+    // 2) Axes & ordering (match your Python ordering)
+    const domains = Array.from(new Set(plotRows.map(r => r.domain))).sort();
+    const timesInData = Array.from(new Set(plotRows.map(r => r.time_point)));
+    const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
+    const specialties = Array.from(new Set(plotRows.map(r => r.specialty))).sort();
+
+    const domainToI = indexer(domains);
+    const timeToI   = indexer(time_axis);
+    const specToI   = indexer(specialties);
+
+    // 3) Same three groups / markers as Python build
+    const acad_spec    = plotRows.filter(r => !r.is_social && !r.is_general);
+    const acad_general = plotRows.filter(r => !r.is_social &&  r.is_general);
+    const social       = plotRows.filter(r =>  r.is_social);
+
+    function buildTrace(data, name, symbol, baseSize, colorFn) {
+      const jx = jitter(data.length), jy = jitter(data.length), jz = jitter(data.length);
+      const x = data.map((r,i) => domainToI.toIdx(r.domain)   + jx[i]);
+      const y = data.map((r,i) => timeToI.toIdx(r.time_point) + jy[i]);
+      const z = data.map((r,i) => specToI.toIdx(r.specialty)  + jz[i]);
+      const sizes = data.map(_ => baseSize); // fixed sizes to match your current visuals
+      const colors= data.map(r => colorFn(r));
+      const customdata = data.map(r => ({
+        short_title: r.incident,
+        description: r.description,
+        time_point:  TIME_TO_DISPLAY[r.time_point] || r.time_point,
+        speciality:  r.specialty,
+        domain:      r.domain,
+        ref_title:   r.ref_title,
+        ref_link:    r.ref_link, 
+        quote:       r.quote,
+        impact:      r.impact,
+        isMultiSource: !!r.isMultiSource,
+        is_social: r.is_social
+      }));
+      return {
+        type: 'scatter3d',
+        mode: 'markers',
+        name,
+        x, y, z,
+        customdata,
+        hovertemplate:
+          "<b>%{customdata.short_title}</b><br>" +
+          "Specialty: %{customdata.speciality}<br>" +
+          "Time: %{customdata.time_point}<br>" +
+          "Domain: %{customdata.domain}<br>" +
+          "Impact: %{customdata.impact}<extra></extra>",
+        hoverlabel: {
+          bgcolor: 'rgba(255,255,255,0.9)',
+          font: {color: 'black'},
+          bordercolor: '#FF6B6B'
+        },
+        marker: {
+          size: sizes,
+          symbol: symbol,
+          color: colors,
+          opacity: 0.88,
+          line: {width: 0.8, color: 'rgba(255,255,255,0.9)'}
+        }
+      };
+    }
+
+    // Specialty color map injected from Python so colours match previous build
+    const SPEC_COLOR_MAP = {"All": "rgb(141,211,199)", "Cancer": "rgb(255,255,179)", "Cardiology": "rgb(190,186,218)", "ENT": "rgb(251,128,114)", "Emergency & Acute Medicine": "rgb(128,177,211)", "Gastroenterology": "rgb(253,180,98)", "General Medicine": "rgb(179,222,105)", "General Surgery": "rgb(252,205,229)", "Heamatology": "rgb(217,217,217)", "Neurology": "rgb(188,128,189)", "Obstetrics": "rgb(204,235,197)", "Oncology": "rgb(255,237,111)", "Orthopaedics": "rgb(102,194,165)", "Paediatrics": "rgb(252,141,98)", "Psychiatry": "rgb(141,160,203)"};
+    const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
+
+    const traces = [];
+    // Build one trace per specialty from the academic, specialty-specific rows
+    const bySpec = new Map();
+    acad_spec.forEach(r => {
+      if (!bySpec.has(r.specialty)) bySpec.set(r.specialty, []);
+      bySpec.get(r.specialty).push(r);
+    });
+
+    // Add per-specialty traces so each shows in the legend with its color
+    Array.from(bySpec.keys()).sort().forEach(specName => {
+      const rowsForSpec = bySpec.get(specName);
+      traces.push(
+        buildTrace(
+          rowsForSpec,
+          specName,            // legend label = specialty
+          "circle",
+          10,                  // marker size (tweak if you like)
+          _ => specColors.get(specName) || "#1f77b4"
+        )
+      );
+    });
+
+    // Keep these two as single traces
+    if (acad_general.length) {
+      traces.push(
+        buildTrace(
+          acad_general,
+          "Affects All Specialties",
+          "x",
+          8,
+          _ => "rgba(255,255,255,0.98)"
+        )
+      );
+    }
+    if (social.length) {
+      traces.push(
+        buildTrace(
+          social,
+          "Social Media Reports",
+          "diamond",
+          9,
+          _ => "rgba(255,99,71,0.95)"
+        )
+      );
+    }
+
+    // Layout: mirrors your Python layout exactly
+    const layout = {
+      title:'CIPHER Cube: Patient Harm During Hospital Cyberattacks',
+      scene:{
+        xaxis:{ title:'Technical Domain', tickvals: domains.map((_,i)=>i), ticktext: domains,
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' },
+        yaxis:{ title:'Time Point', tickvals: time_axis.map((_,i)=>i), ticktext: time_axis.map(t => TIME_TO_DISPLAY[t] || t),
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' },
+        zaxis:{ title:'Medical Specialty', tickvals: specialties.map((_,i)=>i), ticktext: specialties,
+                 showbackground:true, backgroundcolor:'black', gridcolor:'rgba(255,255,255,0.15)',
+                 zerolinecolor:'rgba(255,255,255,0.25)', color:'white' },
+        bgcolor:'black', aspectmode:'cube', dragmode:'orbit'
+      },
+      paper_bgcolor:'black',
+      font:{ color:'#111827' },
+      height:820,
+      margin:{ l:0, r:0, t:60, b:0 },
+      showlegend:true,
+      legend:{
+        orientation:'v', x:1.02, y:1.0, xanchor:'left', yanchor:'top',
+        bgcolor:'rgba(0,0,0,0.88)', bordercolor:'rgba(255,255,255,0.25)',
+        borderwidth:1, font:{color:'white'}
+      }
+    };
+
+    Plotly.newPlot('cipher-cube', traces, layout, {responsive:true});
+  }).catch(err => {
+    console.error('CSV load error:', err);
+    const el = document.getElementById('cipher-cube');
+    if (el) el.innerHTML = '<p style="padding:1rem;color:#b91c1c">Error loading data. Check the CSV path/filename and column names.</p>';
+  });
+})();
+</script>
+
+      </div>
+    </section>
+
+    <section class="grid grid-3" style="margin-top:16px;">
+      <div class="panel">
+        <h4>How to use</h4>
+        <p>Rotate, pan, zoom. Hover for details. Click a point for a full source panel; multi-source items provide next/previous navigation.</p>
+      </div>
+      <div class="panel">
+        <h4>What’s plotted</h4>
+        <p><b>Domain</b> (X) · <b>Time Point</b> (Y) · <b>Specialty</b> (Z). Markers are sized by reported Clinical Impact Score and jittered to reduce overlap.</p>
+      </div>
+      <div class="panel">
+        <h4>Data sources</h4>
+        <p>Peer-reviewed literature and staff/patient reports from social platforms. Interpretation is for situational awareness, not clinical guidance.</p>
+      </div>
+    </section>
+
+    <footer style="color:#6b7280; font-size:14px; margin:32px 0 64px;">
+      © 2025 · Built with Python & Plotly · Static HTML (GitHub Pages)
+    </footer>
+  </div>
+
+  <!-- Modal skeleton that your click-handler uses -->
+  <div class="modal fade" id="infoPanel" tabindex="-1" role="dialog" aria-labelledby="infoPanelTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+      <div class="modal-content" id="infoPanelContent">
+        <div class="modal-header">
+          <h5 class="modal-title" id="infoPanelTitle">Incident</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body" id="infoPanelBody">
+          <!-- Populated on click -->
+        </div>
+        <div class="modal-footer" id="sourceNavigation" style="display:none; width:100%; justify-content:space-between;">
+          <button type="button" class="btn btn-outline-secondary" id="prevSource">◀ Previous</button>
+          <button type="button" class="btn btn-outline-secondary" id="nextSource">Next ▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery + Bootstrap JS (for modal) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Hook up hover cursor + click→modal behavior -->
+  <script>
+    // Optional: provide multiSourceInfo structure here if available from your build
+    window.multiSourceInfo = window.multiSourceInfo || {};
+
+    // Debounce helper (used by your snippet)
+    function debounce(fn, delay) {
+      let t = null;
+      return function() {
+        const args = arguments, ctx = this;
+        clearTimeout(t);
+        t = setTimeout(function() { fn.apply(ctx, args); }, delay);
+      };
+    }
+
+    // Fallback single-source renderer (used if your site-specific function isn't injected)
+      function createSingleSourceModalContent(cd) {
+          const safe = (v) => (v === undefined || v === null) ? '' : String(v);
+          const isSocial =
+            (cd && (cd.is_social === true || String(cd.ref_title || '').trim().toLowerCase() === 'social media'));
+
+          const hasTitle = cd && String(cd.ref_title || '').trim().length > 0;
+          const hasLink  = cd && String(cd.ref_link  || '').trim().length > 0;
+
+          const refHtml = isSocial
+            ? `<p><b>Reference:</b> Social Media (Deidentified, link removed)</p>`
+            : (hasTitle
+                ? (hasLink
+                    ? `<p><b>Reference:</b> <a href="${safe(cd.ref_link)}" target="_blank" rel="noopener">${safe(cd.ref_title)}</a></p>`
+                    : `<p><b>Reference:</b> ${safe(cd.ref_title)}</p>`
+                  )
+                : '');
+
+          const quoteHtml = cd && cd.quote
+            ? `<blockquote class="blockquote" style="font-size:0.95rem;">${cd.quote}</blockquote>`
+            : '';
+
+          return `
+            <p><b>Specialty:</b> ${safe(cd.speciality)} &nbsp; | &nbsp; <b>Time:</b> ${safe(cd.time_point)} &nbsp; | &nbsp; <b>Domain:</b> ${safe(cd.domain)} &nbsp; | &nbsp; <b>Impact:</b> ${safe(cd.impact)}</p>
+            <p>${safe(cd.description)}</p>
+            ${refHtml}
+            ${quoteHtml}
+          `;
+    }
+
+    // Optional multi-source renderer stub (page can override with richer logic)
+    function displayMultiSourcePanel(shortTitle, idx) {
+      const sources = (window.multiSourceInfo[shortTitle] || {}).sources || [];
+      const s = sources[idx] || null;
+      const body = document.getElementById('infoPanelBody');
+      if (!s) { body.innerHTML = '<p>No source details available.</p>'; return; }
+      body.innerHTML = createSingleSourceModalContent(s);
+    }
+
+    // State for multi-source nav
+    window.currentSourceIndex = 0;
+    window.currentSources = [];
+
+    // Attach handlers after Plotly has rendered (local loads can be too fast)
+    (function attachHandlersWhenReady() {
+      var plot = document.getElementById('cipher-cube');
+
+      // Wait until the div exists AND Plotly has populated layout/data
+      if (!plot || !(plot.data || plot._fullData)) {
+        setTimeout(attachHandlersWhenReady, 60);
+        return;
+      }
+
+      // Clear any previous bindings (hot reloads)
+      if (plot.removeAllListeners) {
+        plot.removeAllListeners('plotly_hover');
+        plot.removeAllListeners('plotly_unhover');
+        plot.removeAllListeners('plotly_click');
+      }
+
+      // Cursor polish on hover
+      plot.on('plotly_hover', debounce(function () {
+        document.body.style.cursor = 'pointer';
+      }, 30));
+
+      plot.on('plotly_unhover', debounce(function () {
+        document.body.style.cursor = 'default';
+      }, 50));
+
+      // CLICK -> open modal with either single- or multi-source view
+      plot.on('plotly_click', function (data) {
+        if (!data || !data.points || !data.points[0]) return;
+
+        var pointData = data.points[0].customdata || {};
+
+        window.currentSourceIndex = 0;
+        window.currentSources = [];
+
+        var isMultiSource = (pointData.isMultiSource === true || pointData.isMultiSource === "true");
+        var shortTitle = pointData.short_title;
+
+        var titleEl = document.getElementById('infoPanelTitle');
+        if (titleEl) titleEl.textContent = shortTitle || 'Incident';
+
+        var modalContent = document.getElementById('infoPanelContent');
+        if (modalContent) {
+          if (isMultiSource && window.multiSourceInfo && window.multiSourceInfo[shortTitle]) {
+            modalContent.classList.add('modal-border-multi');
+          } else {
+            modalContent.classList.remove('modal-border-multi');
+          }
+        }
+
+        var sourceNav = document.getElementById('sourceNavigation');
+
+        if (isMultiSource && window.multiSourceInfo && window.multiSourceInfo[shortTitle]) {
+          window.currentSources = window.multiSourceInfo[shortTitle].sources || [];
+          displayMultiSourcePanel(shortTitle, window.currentSourceIndex);
+          if (sourceNav) sourceNav.style.display = 'flex';
+        } else {
+          if (sourceNav) sourceNav.style.display = 'none';
+          var bodyEl = document.getElementById('infoPanelBody');
+          if (bodyEl) bodyEl.innerHTML = createSingleSourceModalContent(pointData);
+        }
+
+        // Show the Bootstrap modal
+        if (window.jQuery && typeof jQuery.fn.modal === 'function') {
+          jQuery('#infoPanel').modal('show');
+        } else {
+          // Fallback if Bootstrap JS failed to load
+          var m = document.getElementById('infoPanel');
+          if (m) m.style.display = 'block';
+        }
+      });
+    })();
+
+    // Nav buttons
+    const prevSourceBtn = document.getElementById('prevSource');
+    if (prevSourceBtn) {
+      prevSourceBtn.addEventListener('click', function () {
+        if (window.currentSourceIndex > 0) {
+          window.currentSourceIndex--;
+          displayMultiSourcePanel(document.getElementById('infoPanelTitle').textContent, window.currentSourceIndex);
+        }
+      });
+    }
+    const nextSourceBtn = document.getElementById('nextSource');
+    if (nextSourceBtn) {
+      nextSourceBtn.addEventListener('click', function () {
+        if (window.currentSources && window.currentSourceIndex < window.currentSources.length - 1) {
+          window.currentSourceIndex++;
+          displayMultiSourcePanel(document.getElementById('infoPanelTitle').textContent, window.currentSourceIndex);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
