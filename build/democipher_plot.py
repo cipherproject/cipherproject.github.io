@@ -670,7 +670,7 @@ HTML_PAGE = f"""<!doctype html>
         <b>CIPHER</b> was built to model <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and effective <b>E</b>mergency <b>R</b>esponse during IT downtime at healthcare organisations.
         To do this, our research collected examples of patient harms occuring during healthcare cyberattacks from diverse data sources, to form one combined
         <b>'CIPHER database' </b>.
-        The CIPHER models on this page draw from our two key datasets described on the <a href="https://www.thecipherplatform.com">project website</a>, consisting of <b>(1) The "Hospital Attacks"</b> dataset (a systematic review of
+        The CIPHER models on this page draw from our two key datasets: <b>(1) The "Hospital Attacks"</b> dataset (a systematic review of
         global papers reporting healthcare cyberattacks), and <b>(2) The "Patient Harms"</b> dataset (extracted through data mining social media posts). 
         From these two sources we created the full <b>CIPHER dataset</b>, available in the data folder in the GitHub Repo,
         which provides over <b>300 patient-level harms</b> reported to have occured following a healthcare cyberattack.
