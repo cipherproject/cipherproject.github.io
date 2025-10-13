@@ -38,6 +38,8 @@ Dr Isabel Straw
 Developed as part of the HR3P Programme at UC San Diego
 
 ## License
-Licensed under Apache 2.0 License
-You are free to use, modify and distribute the project with attribution
+Code: Apache-2.0 (see LICENSE). Data (`/data/*`): CC BY 4.0 © 2025 Isabel Straw (see LICENSE).
+
+## How to cite
+Straw, I. (2025). *CIPHER Dataset v1: Patient Harms During Hospital Cyberattacks* (v1.0.0) [Data set]. The CIPHER Platform. <TO ADD DOI HERE>
 
