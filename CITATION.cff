@@ -5,12 +5,19 @@ authors:
   - family-names: Straw
     given-names: Isabel
     affiliation: "UC San Diego — H3RP Programme"
+  - family-names: Tully
+    given-names: Jeffrey
+    # affiliation: ""
+  - family-names: Dameff
+    given-names: Christian
+    affiliation: "UC San Diego"
 repository-code: "https://github.com/cipherproject/thecipherplatform.github.io"
 url: "https://cipherproject.github.io/"
 type: dataset
 license: CC-BY-4.0
 version: "1.0.0"
 date-released: "2025-10-13"
+
 preferred-citation:
   type: dataset
   title: "CIPHER Dataset v1: Patient Harms During Hospital Cyberattacks"
@@ -18,10 +25,15 @@ preferred-citation:
     - family-names: Straw
       given-names: Isabel
       affiliation: "UC San Diego — H3RP Programme"
+    - family-names: Tulley
+      given-names: Jeffrey
+    - family-names: Dameff
+      given-names: Christian
+      affiliation: "UC San Diego"
   year: 2025
   version: "1.0.0"
-  notes: "Data file: data/v1_cipher_data.csv"
-  url: "https://github.com/cipherproject/thecipherplatform.github.io/releases/tag/v1.0.0"
+  notes: "Data file: data/v1_cipherdata_latest.csv"
+  url: "https://github.com/cipherproject/thecipherplatform.github.io/releases/tag/v1.0.1"
   # identifiers:
   #   - type: doi
   #     value: "10.5281/zenodo.XXXXXXX"
