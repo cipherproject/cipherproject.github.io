@@ -8,16 +8,14 @@ import numpy as np
 from datetime import datetime, timezone
 import json
 
-# Configuration and setup
-CSV_PATH    = "data/v1_cipherdata_latest.csv"   # Latest version of Cipher Data - update as each row checked
-OUTPUT_HTML = "index.html"                       # Main HTML file - GitHub Pages then serves this
+# Set up - Link to full database in data folder
+CSV_PATH    = "data/v1_cipherdata_latest.csv"   
+OUTPUT_HTML = "index.html"                       # HTML File for Github project page, shows demo on readme
 
-# Stable jitter (points don't jump between runs)
+# Stable jitter
 random.seed(42)
 
 # Formatting
-## Time normalisation & display mapping
-
 TIME_ORDER = [
     "Time 0", "Hour Zero", "First Hour", "First Day", "First Week", "Week 2", "First Month", "Unknown"
 ]
@@ -33,6 +31,7 @@ TIME_TO_DISPLAY = {
     "Unknown": "Unknown"
 }
 
+# Fix any typos / errors in labelling of time-point variable
 def norm_time_point(s: str) -> str:
     if not isinstance(s, str):
         return "Unknown"
@@ -48,25 +47,25 @@ def norm_time_point(s: str) -> str:
     if t in TIME_TO_DISPLAY:                                 return t
     return t if len(t) <= 30 else "Unknown"
 
-def split_specialties(s): # Column in csv has multiple specialities for some points, e.g. blood test delays
+def split_specialties(s): # Specialty column in csv can have multiple specialities for some points, e.g. loss of imaging software > multiple surgical specialties
     if not isinstance(s, str) or not s.strip():
         return ["All"]
-    # support both ";" and "," as separators
+    # both ";" and "," as separators
     return [p.strip() for p in s.replace(",", ";").split(";") if p.strip()] or ["All"]
 
 def safe_str(x): 
     return "" if pd.isna(x) else str(x)
 
-# Load data (latest version of csv)
+# Load data 
 if not os.path.exists(CSV_PATH):
     raise FileNotFoundError(f"CSV not found at {CSV_PATH}")
 
 df_raw = pd.read_csv(CSV_PATH)
 
-# Rename columns to internal names (df / csv headers)
+# Rename columns for processing
 rename_map = {
     'Reference Title': 'ref_title',
-    'Short Title':     'incident',
+    'Short Title':     'incident', # Some rows are aggregated under same short title for ease of graph presentation
     'Description of Patient Harm': 'description',
     'Direct Quote':    'quote',
     'Time Point':      'time_point',
@@ -82,10 +81,10 @@ df['time_point'] = df['time_point'].apply(norm_time_point)
 df.loc[df['time_point'] == "", 'time_point'] = "Unknown"
 df['domain'] = df['domain'].fillna("Unknown").replace("", "Unknown")
 
-# Numeric impact for sizing (impact scores from csv)
+# Numeric impact for sizing (clinical impact scores)
 df['impact'] = pd.to_numeric(df['impact'], errors='coerce').fillna(5).clip(lower=1)
 
-# Expand multi-specialty rows into one row per specialty 
+# Multi-specialty rows expanded into one row per specialty, so can be easily plotted
 rows = []
 for _, r in df.iterrows():
     specialties = split_specialties(safe_str(r.get('specialty_raw', 'All')))
@@ -96,11 +95,10 @@ for _, r in df.iterrows():
 
 df2 = pd.DataFrame(rows)
 
-# Flags for styling
 df2['is_general'] = df2['specialty'].str.strip().str.lower().eq('all')
 df2['is_social']  = df2['ref_title'].astype(str).str.strip().str.lower().eq('social media')
 
-# Build category axes
+# Build category axes - IT domains, e.g. telemetry
 domains = sorted(df2['domain'].dropna().unique().tolist())
 
 times_in_data = df2['time_point'].dropna().unique().tolist()
@@ -117,16 +115,14 @@ domain_to_i = {d: i for i, d in enumerate(domains)}
 time_to_i   = {t: i for i, t in enumerate(time_axis)}
 spec_to_i   = {s: i for i, s in enumerate(specialties)}
 
-# Setting colour palette for specialties
+# Setting colour palette for different medical specialties
 palette = px.colors.qualitative.Set3 + px.colors.qualitative.Set2 + px.colors.qualitative.Pastel1
 color_map = {s: palette[i % len(palette)] for i, s in enumerate(specialties)}
 
-# Traces/Markers: Specialty Academic, Affects All, Social media
-
+# Traces/Markers: Social media source, Academic Source (specific specialty) or Affects all (X maker)
 traces = []
 
-# Hover template with reduced hoverlabel styling
-
+# Hover template - See summary box of info
 HOVERTEMPLATE = (
     "<b>%{customdata.short_title}</b><br>" +
     "Specialty: %{customdata.speciality}<br>" +
@@ -142,9 +138,8 @@ HOVERLABEL = dict(
     bordercolor='#FF6B6B'
 )
 
-# When click on the data point, get the extract from the reference text
+# When click on the data point, get info pain with short title and key content (extract from the reference text)
 def make_customdata(r: pd.Series) -> dict:
-    # Keys aligned to your click-handler expectations
     tp_disp = TIME_TO_DISPLAY.get(safe_str(r.get('time_point')), safe_str(r.get('time_point')))
     return {
         "short_title": safe_str(r.get('incident')),
@@ -161,14 +156,14 @@ def make_customdata(r: pd.Series) -> dict:
     }
 
 # 1) Academic specialty-specific (circles; one trace per specialty)
-
 acad_spec = df2[(~df2['is_social']) & (~df2['is_general'])]
 
 for spec, g in acad_spec.groupby('specialty'):
     x = [domain_to_i[d] + random.uniform(-0.18, 0.18) for d in g['domain']]
     y = [time_to_i[t]   + random.uniform(-0.18, 0.18) for t in g['time_point']]
     z = [spec_to_i[spec]+ random.uniform(-0.18, 0.18) for _ in range(len(g))]
-    size = 6 # previously this to integrate impact, can bring back [max(float(v) * 1.5, 5) for v in g['impact']]
+    
+    size = 6 # Size of markers - could update to reflect impact scores if wanted to
     cdata = [make_customdata(r) for _, r in g.iterrows()]
 
     traces.append(go.Scatter3d(
@@ -210,7 +205,7 @@ if not acad_general.empty:
         showlegend=True
     ))
 
-# 3) Social media (diamonds; warm accent)
+# 3) Social media (diamonds, warm accent)
 social = df2[df2['is_social']]
 if not social.empty:
     x = [domain_to_i[d] + random.uniform(-0.18, 0.18) for d in social['domain']]
@@ -235,8 +230,9 @@ if not social.empty:
     ))
 
 # -----------------------------------------------------------------------------
-# Layout (white page; BLACK plot panel & scene; cube aspect; legend on LEFT)
+# Layout (white page; black plot panel; cube aspect for models; legend on LEFT)
 # -----------------------------------------------------------------------------
+
 layout = go.Layout(
     title='CIPHER Cube: Patient Harm During Hospital Cyberattacks',
     scene=dict(
@@ -245,7 +241,7 @@ layout = go.Layout(
             tickvals=list(range(len(domains))),
             ticktext=domains,
             showbackground=True,
-            backgroundcolor='black',    # solid black plane
+            backgroundcolor='black',    
             gridcolor='rgba(255,255,255,0.15)',
             zerolinecolor='rgba(255,255,255,0.25)',
             color='white'
@@ -255,7 +251,7 @@ layout = go.Layout(
             tickvals=list(range(len(time_axis))),
             ticktext=[TIME_TO_DISPLAY.get(t, t) for t in time_axis],
             showbackground=True,
-            backgroundcolor='black',    # solid black plane
+            backgroundcolor='black',    
             gridcolor='rgba(255,255,255,0.15)',
             zerolinecolor='rgba(255,255,255,0.25)',
             color='white'
@@ -265,7 +261,7 @@ layout = go.Layout(
             tickvals=list(range(len(specialties))),
             ticktext=specialties,
             showbackground=True,
-            backgroundcolor='black',    # solid black plane
+            backgroundcolor='black',   
             gridcolor='rgba(255,255,255,0.15)',
             zerolinecolor='rgba(255,255,255,0.25)',
             color='white'
@@ -290,7 +286,7 @@ layout = go.Layout(
     )
 )
 
-# Build a div + client-side loader that fetches your CSV at runtime
+# Div + client-side loader that fetches CSV at runtime
 VERSION = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
 CSV_URL = f"{CSV_PATH}?v={VERSION}"
 SPEC_COLOR_MAP_JSON = json.dumps(color_map)  # dict: {specialty: "#hex", ...}
@@ -300,11 +296,11 @@ plot_div = f"""
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-// ---- Client-side loader: reproduces your Python-built cube from /data CSV ----
+// ---- Client-side loader: reproduces Python-built cube from /data CSV ----
 (function() {{
   const CSV_PATH = {CSV_URL!r};
 
-  // Your existing time mapping / ordering
+  // Existing time mapping / ordering
   const TIME_TO_DISPLAY = {{
     "Time 0": "Hour 0",
     "Hour Zero": "Hour 0",
@@ -331,18 +327,22 @@ plot_div = f"""
     if (TIME_TO_DISPLAY[t]) return t;
     return t || "Unknown";
   }}
+  
   function splitSpecialties(s) {{
     const raw = safe(s).trim();
     if (!raw) return ["All"];
     return (raw.replace(/,/g,';').split(';').map(x => x.trim()).filter(Boolean)) || ["All"];
   }}
+  
   function indexer(values) {{
     const uniq = Array.from(new Set(values)).filter(v => v !== "");
     return {{ order: uniq, toIdx: v => uniq.indexOf(v) }};
   }}
+  
   function jitter(n, amt=0.18) {{
     return Array.from({{length:n}}, () => (Math.random()-0.5)*2*amt);
   }}
+  
   function toNum(v, fb=5) {{
     const x = Number(v);
     return Number.isFinite(x) ? x : fb;
@@ -373,7 +373,7 @@ plot_div = f"""
       }});
     }});
 
-    // ---- START GROUPING BY SHORT TITLE (collate duplicates into one marker) ----
+    // ---- START GROUPING BY SHORT TITLE (collates the duplicates into one marker) ----
     const groups = new Map();
     rows.forEach(r => {{
       const key = (r.incident || "").trim();
@@ -394,10 +394,10 @@ plot_div = f"""
         byOrig.get(r.orig_id).push(r);
       }});
 
-      // 2) Build one source per original CSV row
+      // 2) One source per original CSV row
       const uniqueSources = [];
       byOrig.forEach((variants /* same orig row across specialties */) => {{
-        // choose a display specialty per original row
+        // Choose a display specialty per original row
         const rawList = splitSpecialties(variants[0].specialty_raw || "");
         const hasMultiple = rawList.length > 1;    
         const preferred = variants.map(v => v.specialty).find(s => s && s.toLowerCase() !== "all");
@@ -419,12 +419,12 @@ plot_div = f"""
         }});
       }});
 
-      // 3) Place a marker on each specialty plane present in this group (exclude "All")
+      // 3) Marker on each specialty plane present in this group (exclude "All")
         const groupSpecs = Array.from(
           new Set(arr.filter(r => !r.is_general).map(r => r.specialty))
         );
 
-        // If there are no specialty-specific rows (only "All"), put a single general marker
+        // If there are no specialty-specific rows (only "All"), takes a single general marker
         if (groupSpecs.length === 0 && arr.some(r => r.is_general)) {{
           const gen = arr.find(r => r.is_general) || arr[0];
           plotRows.push({{ ...gen, isMultiSource: uniqueSources.length > 1 }});
@@ -436,7 +436,7 @@ plot_div = f"""
           }});
         }}
 
-        // 4) Save sources for the modal arrows (unchanged)
+        // 4) Save sources for the modal arrows
         multiSourceInfo[key] = {{ sources: uniqueSources }};
     }});
     
@@ -445,7 +445,7 @@ plot_div = f"""
     // ---- END GROUPING BY SHORT TITLE ----
 
 
-    // 2) Axes & ordering (match your Python ordering)
+    // 2) Axes & ordering (match Python ordering)
     const domains = Array.from(new Set(plotRows.map(r => r.domain))).sort();
     const timesInData = Array.from(new Set(plotRows.map(r => r.time_point)));
     const time_axis = [...TIME_ORDER.filter(t => timesInData.includes(t)), ...timesInData.filter(t => !TIME_ORDER.includes(t))];
@@ -465,7 +465,7 @@ plot_div = f"""
       const x = data.map((r,i) => domainToI.toIdx(r.domain)   + jx[i]);
       const y = data.map((r,i) => timeToI.toIdx(r.time_point) + jy[i]);
       const z = data.map((r,i) => specToI.toIdx(r.specialty)  + jz[i]);
-      const sizes = data.map(_ => baseSize); // fixed sizes to match your current visuals
+      const sizes = data.map(_ => baseSize); 
       const colors= data.map(r => colorFn(r));
       const customdata = data.map(r => ({{
         short_title: r.incident,
@@ -507,19 +507,19 @@ plot_div = f"""
       }};
     }}
 
-    // Specialty color map injected from Python so colours match previous build
+    // Specialty color map injected from Python so colours match 
     const SPEC_COLOR_MAP = {SPEC_COLOR_MAP_JSON};
     const specColors = new Map(Object.entries(SPEC_COLOR_MAP));
 
     const traces = [];
-    // Build one trace per specialty from the academic, specialty-specific rows
+    // One trace per specialty from the academic, specialty-specific rows
     const bySpec = new Map();
     acad_spec.forEach(r => {{
       if (!bySpec.has(r.specialty)) bySpec.set(r.specialty, []);
       bySpec.get(r.specialty).push(r);
     }});
 
-    // Add per-specialty traces so each shows in the legend with its color
+    // Per-specialty traces so each shows in the legend with its color
     Array.from(bySpec.keys()).sort().forEach(specName => {{
       const rowsForSpec = bySpec.get(specName);
       traces.push(
@@ -527,13 +527,13 @@ plot_div = f"""
           rowsForSpec,
           specName,            // legend label = specialty
           "circle",
-          10,                  // marker size (tweak if you like)
+          10,                  // marker size 
           _ => specColors.get(specName) || "#1f77b4"
         )
       );
     }});
 
-    // Keep these two as single traces
+    // these two as single traces
     if (acad_general.length) {{
       traces.push(
         buildTrace(
@@ -557,7 +557,7 @@ plot_div = f"""
       );
     }}
 
-    // Layout: mirrors your Python layout exactly
+    // Layout: mirrors Python layout
     const layout = {{
       title:'CIPHER Cube: Patient Harm During Hospital Cyberattacks',
       scene:{{
@@ -597,8 +597,9 @@ plot_div = f"""
 # -----------------------------------------------------------------------------
 
 # FORMATTING FOR PAGE
+
 # Page template (white page; restores header + 3 info cards; includes modal & JS)
-# Plot panel is pure black so the white scene blends seamlessly.
+# Plot panel is pure black
 # Edits here for Io Page etc
 
 HTML_PAGE = f"""<!doctype html>
@@ -616,7 +617,7 @@ HTML_PAGE = f"""<!doctype html>
     :root {{
       --ink: #111827;
       --muted: #6b7280;
-      --panel: #0f172a;     /* navy panels for info cards */
+      --panel: #0f172a;     
       --panel-ink: #e5e7eb;
       --accent: #2563eb;
     }}
@@ -641,7 +642,7 @@ HTML_PAGE = f"""<!doctype html>
       box-shadow: 0 10px 24px rgba(0,0,0,0.15);
     }}
 
-    /* PURE BLACK panel for the plot */
+    /* Black panel for the plot */
     .panel-plot {{
       background: #000000;
       color: #e5e7eb; /* labels above the plot */
@@ -729,7 +730,7 @@ HTML_PAGE = f"""<!doctype html>
     </footer>
   </div>
 
-  <!-- Modal skeleton that your click-handler uses -->
+  <!-- Modal skeleton for click-handler uses -->
   <div class="modal fade" id="infoPanel" tabindex="-1" role="dialog" aria-labelledby="infoPanelTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
       <div class="modal-content" id="infoPanelContent">
@@ -752,12 +753,12 @@ HTML_PAGE = f"""<!doctype html>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Hook up hover cursor + click→modal behavior -->
+  <!-- hover cursor + click→modal behavior -->
   <script>
     // Optional: provide multiSourceInfo structure here if available from your build
     window.multiSourceInfo = window.multiSourceInfo || {{}};
 
-    // Debounce helper (used by your snippet)
+    // Debounce helper
     function debounce(fn, delay) {{
       let t = null;
       return function() {{
@@ -767,7 +768,7 @@ HTML_PAGE = f"""<!doctype html>
       }};
     }}
 
-    // Fallback single-source renderer (used if your site-specific function isn't injected)
+    // Fallback single-source renderer 
       function createSingleSourceModalContent(cd) {{
           const safe = (v) => (v === undefined || v === null) ? '' : String(v);
           const isSocial =
@@ -797,7 +798,7 @@ HTML_PAGE = f"""<!doctype html>
           `;
     }}
 
-    // Optional multi-source renderer stub (page can override with richer logic)
+    // multi-source renderer stub 
     function displayMultiSourcePanel(shortTitle, idx) {{
       const sources = (window.multiSourceInfo[shortTitle] || {{}}).sources || [];
       const s = sources[idx] || null;
@@ -810,17 +811,16 @@ HTML_PAGE = f"""<!doctype html>
     window.currentSourceIndex = 0;
     window.currentSources = [];
 
-    // Attach handlers after Plotly has rendered (local loads can be too fast)
+    // Attach handlers after Plotly has rendered
     (function attachHandlersWhenReady() {{
       var plot = document.getElementById('cipher-cube');
 
-      // Wait until the div exists AND Plotly has populated layout/data
       if (!plot || !(plot.data || plot._fullData)) {{
         setTimeout(attachHandlersWhenReady, 60);
         return;
       }}
 
-      // Clear any previous bindings (hot reloads)
+      // Clear any previous bindings 
       if (plot.removeAllListeners) {{
         plot.removeAllListeners('plotly_hover');
         plot.removeAllListeners('plotly_unhover');
@@ -836,7 +836,7 @@ HTML_PAGE = f"""<!doctype html>
         document.body.style.cursor = 'default';
       }}, 50));
 
-      // CLICK -> open modal with either single- or multi-source view
+      // Click - open modal with either single- or multi-source view
       plot.on('plotly_click', function (data) {{
         if (!data || !data.points || !data.points[0]) return;
 
@@ -883,7 +883,7 @@ HTML_PAGE = f"""<!doctype html>
       }});
     }})();
 
-    // Nav buttons
+    // Navigation buttons
     const prevSourceBtn = document.getElementById('prevSource');
     if (prevSourceBtn) {{
       prevSourceBtn.addEventListener('click', function () {{
