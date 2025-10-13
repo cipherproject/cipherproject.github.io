@@ -7,7 +7,7 @@ authors:
     affiliation: "UC San Diego — H3RP Programme"
   - family-names: Tully
     given-names: Jeffrey
-    # affiliation: ""
+    affiliation: "UC San Diego"
   - family-names: Dameff
     given-names: Christian
     affiliation: "UC San Diego"
@@ -15,7 +15,7 @@ repository-code: "https://github.com/cipherproject/thecipherplatform.github.io"
 url: "https://cipherproject.github.io/"
 type: dataset
 license: CC-BY-4.0
-version: "1.0.0"
+version: "1.0.1"
 date-released: "2025-10-13"
 
 preferred-citation:
@@ -36,4 +36,4 @@ preferred-citation:
   url: "https://github.com/cipherproject/thecipherplatform.github.io/releases/tag/v1.0.1"
   # identifiers:
   #   - type: doi
-  #     value: "10.5281/zenodo.XXXXXXX"
+  #     value: "10.5281/zenodo.17344644"
