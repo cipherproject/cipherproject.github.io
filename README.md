@@ -1,6 +1,6 @@
 # The CIPHER Platform
 
-**Cyberattack Impacts, Patient Harms & Emergency Response (CIPHER)** is an interactive platform for modelling clinical risks from healthcare cyberattacks.
+**Cyberattack Impacts, Patient Harms & Emergency Response (CIPHER)** is an open source project for modelling clinical risks from healthcare cyberattacks.
 
 Check out the demo version of the platform here: [https://cipherproject.github.io/](https://cipherproject.github.io/)
 
