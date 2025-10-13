@@ -1,5 +1,7 @@
 # The CIPHER Platform
 
+[![DOI](https://zenodo.org/badge/1064058666.svg)](https://doi.org/10.5281/zenodo.17344644)
+
 **Cyberattack Impacts, Patient Harms & Emergency Response (CIPHER)** is an open source project for modelling clinical risks from healthcare cyberattacks.
 
 Check out the demo version of the platform here: [https://cipherproject.github.io/](https://cipherproject.github.io/)
@@ -40,4 +42,5 @@ Developed as part of the HR3P Programme at UC San Diego
 Code: Apache-2.0 (see LICENSE). Data (`/data/*`): CC BY 4.0 © 2025 Isabel Straw (see LICENSE).
 
 ## How to cite
-Straw, I., Tully, J., & Dameff, C. (2025). *CIPHER Dataset v1: Patient Harms During Hospital Cyberattacks* (v1.0.1) [Data set]. The CIPHER Platform. 
+Straw, I., Tully, J., & Dameff, C. (2025). *CIPHER Dataset v1: Patient Harms During Hospital Cyberattacks* (v1.0.1) [Data set]. The CIPHER Platform. All versions: https://doi.org/10.5281/zenodo.17344644
+
