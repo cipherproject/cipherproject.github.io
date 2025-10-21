@@ -6,6 +6,8 @@
 
 Check out the demo version of the platform here: [https://cipherproject.github.io/](https://cipherproject.github.io/)
 
+The full project website with additional resources and functionality is available here: [https://www.thecipherplatform.com](https://www.thecipherplatform.com)
+
 ## About
 The <b>CIPHER project</b> was built to safeguard patient care during healthcare cyberattacks, by improving the way we model <b>C</b>yberattack <b>I</b>mpacts, <b>P</b>atient <b>H</b>arms and <b>E</b>mergency <b>R</b>esponse (CIPHER). 
 
