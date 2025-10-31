@@ -34,6 +34,6 @@ preferred-citation:
   version: "1.0.0"
   notes: "Data file: data/v1_cipherdata_latest.csv"
   url: "https://github.com/cipherproject/thecipherplatform.github.io/releases/tag/v1.0.1"
-  # identifiers:
-  #   - type: doi
-  #     value: "10.5281/zenodo.17344644"
+  identifiers:
+    - type: doi
+      value: "10.5281/zenodo.17344644"
